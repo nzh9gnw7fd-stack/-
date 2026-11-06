@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SVWB メタトラッカー</title>
+<link rel="stylesheet" href="/static/style.css">
+<script src="/static/vendor/chart.umd.min.js"></script>
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <h1>SVWB メタトラッカー</h1>
+    <p class="sub">SNS・ブログ・大会結果の投稿から推定した環境（<span id="updated">—</span>）</p>
+  </div>
+  <button id="themeBtn" class="ghost" aria-label="テーマ切り替え">◐</button>
+</header>
+
+<section class="filters" aria-label="絞り込み">
+  <label>フォーマット
+    <select id="fFormat"><option value="rotation">ローテーション</option><option value="unlimited">アンリミテッド</option></select>
+  </label>
+  <label>期間
+    <select id="fDays"><option value="3">3日</option><option value="7">7日</option><option value="14" selected>14日</option><option value="30">30日</option><option value="60">60日</option></select>
+  </label>
+  <div class="rankchips" id="fRanks" role="group" aria-label="ランク帯"></div>
+  <label class="auto"><input type="checkbox" id="fAuto" checked> 自動更新</label>
+</section>
+
+<div id="demoBanner" class="banner" hidden>
+  いま表示しているのは <b>架空のデモデータ</b> です。実データを取り込むと置き換わります（下の「データ取り込み」から）。
+</div>
+
+<section class="kpis" id="kpis"></section>
+
+<main class="grid">
+  <article class="card wide">
+    <header><h2>デッキ別 使用率・推定勝率</h2>
+      <p class="note">勝率は「自分視点＋相手視点」で数え、少数サンプルは 50% 側に補正済み。棒は 95% 信頼区間。</p></header>
+    <div class="tablewrap"><table class="tier" id="tierTable"></table></div>
+  </article>
+
+  <article class="card wide">
+    <header><h2>使用率の推移</h2><p class="note">上位デッキ（色＝クラス、同クラス2つ目は破線）</p></header>
+    <div class="chartbox"><canvas id="shareChart" aria-label="使用率の推移グラフ"></canvas></div>
+  </article>
+
+  <article class="card wide">
+    <header><h2>相性表</h2><p class="note">行のデッキから見た列のデッキへの推定勝率。薄いセルはサンプル不足（30試合未満）。</p></header>
+    <div class="tablewrap"><table class="heat" id="muTable"></table></div>
+    <div class="legend-div"><span>不利</span><i class="ramp"></i><span>有利</span></div>
+  </article>
+
+  <article class="card wide">
+    <header><h2>ランク帯ごとの使用率</h2><p class="note">ランク帯の絞り込みに関係なく全ランクを表示</p></header>
+    <div class="tablewrap"><table class="heat seq" id="rankTable"></table></div>
+  </article>
+
+  <article class="card">
+    <header><h2>最近の投稿と抽出結果</h2><p class="note">抽出が正しいかの確認用</p></header>
+    <select id="postDeck"><option value="">すべてのデッキ</option></select>
+    <ul class="posts" id="posts"></ul>
+  </article>
+
+  <article class="card">
+    <header><h2>データ取り込み</h2><p class="note" id="srcStatus"></p></header>
+    <label>形式
+      <select id="impKind">
+        <option value="text">投稿テキスト（--- か空行2つで区切る）</option>
+        <option value="csv">CSV（played_at,deck,opponent,result,rank,author）</option>
+        <option value="json">JSON（[{text, author, posted_at, url}]）</option>
+        <option value="rss">RSS/Atom フィードの URL</option>
+      </select>
+    </label>
+    <textarea id="impText" rows="8" placeholder="例:&#10;ランプドラゴン使用 vs スペルウィッチ 勝ち&#10;---&#10;アグロエルフでマスター到達！15勝5敗"></textarea>
+    <div class="row"><button id="impBtn">取り込む</button><button id="collectBtn" class="ghost">今すぐ収集</button></div>
+    <p id="impResult" class="note" role="status"></p>
+  </article>
+</main>
+
+<div id="tip" class="tip" role="tooltip" hidden></div>
+<script src="/static/app.js"></script>
+</body>
+</html>
