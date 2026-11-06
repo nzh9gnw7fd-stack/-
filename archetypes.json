@@ -1,18 +1,20 @@
 {
-  "_comment": "アーキタイプ辞書。パック更新ごとに編集する。aliases は投稿中の表記ゆれ、key_cards はデッキコード/カード名からの判定に使う。ここにあるデッキ名はサンプルで、実際の環境に合わせて書き換えること。",
+  "_comment": "アーキタイプ辞書。第10弾「ニーゲルヘリア神殺事件」（2026-10-28〜）環境。2026-11-06 時点の攻略サイトの Tier 表（GameWith / Game8 / Dexel / シャドラボ）に出てくるデッキ名をもとに作成。aliases は投稿中の略称・表記ゆれ。key_cards は確認できたカード名のみ記入（空欄は今後埋める）。formats はそのデッキが主に見られるフォーマット。",
+  "updated": "2026-11-06",
+  "expansion": "ニーゲルヘリア神殺事件",
   "classes": {
     "エルフ": ["エルフ", "elf", "E"],
     "ロイヤル": ["ロイヤル", "royal", "R", "ロイ"],
     "ウィッチ": ["ウィッチ", "witch", "W", "ウィ"],
     "ドラゴン": ["ドラゴン", "dragon", "D", "ドラ"],
-    "ナイトメア": ["ナイトメア", "nightmare", "N", "ナイメア", "ナメ"],
+    "ナイトメア": ["ナイトメア", "nightmare", "N", "Ni", "ナイメア", "ナメ"],
     "ビショップ": ["ビショップ", "bishop", "B", "ビショ"],
     "ネメシス": ["ネメシス", "nemesis", "Nm", "ネメ"]
   },
   "ranks": ["ビギナー", "D", "C", "B", "A", "AA", "マスター", "グランドマスター"],
   "rank_aliases": {
     "グランドマスター": ["グランドマスター", "GM", "グラマス", "grandmaster"],
-    "マスター": ["マスター", "master", "MP"],
+    "マスター": ["マスター", "master"],
     "AA": ["AA", "AA帯", "ダブルエー"],
     "A": ["A帯", "Aランク"],
     "B": ["B帯", "Bランク"],
@@ -21,19 +23,48 @@
     "ビギナー": ["ビギナー", "beginner"]
   },
   "archetypes": [
-    {"name": "アグロエルフ", "class": "エルフ", "aliases": ["アグロエルフ", "アグエル", "フェアリーエルフ"], "key_cards": []},
-    {"name": "コントロールエルフ", "class": "エルフ", "aliases": ["コンエル", "コントロールエルフ"], "key_cards": []},
-    {"name": "進化ロイヤル", "class": "ロイヤル", "aliases": ["進化ロイヤル", "進化ロイ"], "key_cards": []},
-    {"name": "ミッドレンジロイヤル", "class": "ロイヤル", "aliases": ["ミッドロイ", "ミッドレンジロイヤル", "兵士ロイ"], "key_cards": []},
-    {"name": "スペルウィッチ", "class": "ウィッチ", "aliases": ["スペルウィッチ", "スペウィ", "スペル"], "key_cards": []},
-    {"name": "土ウィッチ", "class": "ウィッチ", "aliases": ["土ウィッチ", "土ウィ", "秘術"], "key_cards": []},
-    {"name": "ランプドラゴン", "class": "ドラゴン", "aliases": ["ランプドラゴン", "ランプドラ", "ランプ"], "key_cards": []},
-    {"name": "アグロドラゴン", "class": "ドラゴン", "aliases": ["アグロドラゴン", "フェイスドラゴン", "フェイスドラ"], "key_cards": []},
-    {"name": "ミッドレンジナイトメア", "class": "ナイトメア", "aliases": ["ミッドナイメア", "ミッドレンジナイトメア", "ミッドナメ"], "key_cards": []},
-    {"name": "復讐ナイトメア", "class": "ナイトメア", "aliases": ["復讐ナイトメア", "復讐", "自傷ナイトメア"], "key_cards": []},
-    {"name": "クレストビショップ", "class": "ビショップ", "aliases": ["クレストビショップ", "クレビショ", "クレスト"], "key_cards": []},
-    {"name": "守護ビショップ", "class": "ビショップ", "aliases": ["守護ビショップ", "守護ビショ"], "key_cards": []},
-    {"name": "人形ネメシス", "class": "ネメシス", "aliases": ["人形ネメシス", "人形ネメ", "人形"], "key_cards": []},
-    {"name": "アーティファクトネメシス", "class": "ネメシス", "aliases": ["AFネメ", "アーティファクトネメシス", "AFネメシス"], "key_cards": []}
+    {"name": "ミッドレンジナイトメア", "class": "ナイトメア", "formats": ["rotation"],
+     "aliases": ["ミッドナイトメア", "ミッドナイメア", "ミッドレンジNi", "ミッドレンジN", "ミッドN", "ミッドNi", "ミッドナメ"], "key_cards": []},
+
+    {"name": "スペルキマイラウィッチ", "class": "ウィッチ", "formats": ["rotation"],
+     "aliases": ["キマイラウィッチ", "スペルキマイラ", "キマイラW", "キマイラウィ"], "key_cards": ["劫焔のキマイラ"]},
+    {"name": "スペル秘術ウィッチ", "class": "ウィッチ", "formats": ["rotation"],
+     "aliases": ["秘術ウィッチ", "秘術W", "秘術ウィ", "スペル秘術"], "key_cards": []},
+    {"name": "リンクルウィッチ", "class": "ウィッチ", "formats": ["rotation"],
+     "aliases": ["リンクルW", "リンクルウィ"], "key_cards": []},
+
+    {"name": "コンボエルフ", "class": "エルフ", "formats": ["rotation"],
+     "aliases": ["コンボE", "コンボエル"], "key_cards": []},
+    {"name": "ダストデイズエルフ", "class": "エルフ", "formats": ["rotation"],
+     "aliases": ["DDエルフ", "DDE", "ダストデイズ", "ダストデイズE"], "key_cards": []},
+    {"name": "テンポエルフ", "class": "エルフ", "formats": ["rotation", "unlimited"],
+     "aliases": ["テンポE", "テンポエル"], "key_cards": []},
+
+    {"name": "兎ビショップ", "class": "ビショップ", "formats": ["rotation"],
+     "aliases": ["兎ビショ", "兎B", "うさぎビショップ", "うさビショ", "ウサギビショップ"], "key_cards": ["地害の三悪・ラピッドハット", "荒廃の繁殖"]},
+    {"name": "クキシロビショップ", "class": "ビショップ", "formats": ["rotation"],
+     "aliases": ["クキシロビショ", "クキシロB", "クキシロ"], "key_cards": []},
+
+    {"name": "証拠ロイヤル", "class": "ロイヤル", "formats": ["rotation"],
+     "aliases": ["証拠ロイ", "証拠R"], "key_cards": []},
+    {"name": "海賊ロイヤル", "class": "ロイヤル", "formats": ["rotation"],
+     "aliases": ["海賊ロイ", "海賊R"], "key_cards": []},
+
+    {"name": "融合ネメシス", "class": "ネメシス", "formats": ["rotation"],
+     "aliases": ["融合ネメ", "融合Nm"], "key_cards": []},
+
+    {"name": "フェイスドラゴン", "class": "ドラゴン", "formats": ["rotation"],
+     "aliases": ["フェイスドラ", "フェイスD", "アグロドラゴン"], "key_cards": []},
+
+    {"name": "スペルウィッチ", "class": "ウィッチ", "formats": ["unlimited"],
+     "aliases": ["スペウィ"], "key_cards": []},
+    {"name": "守護ビショップ", "class": "ビショップ", "formats": ["unlimited"],
+     "aliases": ["守護ビショ", "守護B"], "key_cards": []},
+    {"name": "アグロナイトメア", "class": "ナイトメア", "formats": ["unlimited"],
+     "aliases": ["アグロナイメア", "アグロN", "アグロNi", "アグロナメ"], "key_cards": []},
+    {"name": "AFネメシス", "class": "ネメシス", "formats": ["unlimited"],
+     "aliases": ["AFネメ", "アーティファクトネメシス", "アーティファクトネメ"], "key_cards": []},
+    {"name": "ランプドラゴン", "class": "ドラゴン", "formats": ["unlimited"],
+     "aliases": ["ランプドラ", "ランプD"], "key_cards": []}
   ]
 }

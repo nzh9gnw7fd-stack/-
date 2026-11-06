@@ -21,6 +21,7 @@ class Archetype:
     cls: str
     aliases: list[str] = field(default_factory=list)
     key_cards: list[str] = field(default_factory=list)
+    formats: list[str] = field(default_factory=lambda: ["rotation", "unlimited"])
 
 
 @dataclass
@@ -31,8 +32,8 @@ class Catalog:
     archetypes: list[Archetype]
 
     # ---- 正規化 ----
-    def archetype_names(self) -> list[str]:
-        return [a.name for a in self.archetypes]
+    def archetype_names(self, fmt: str | None = None) -> list[str]:
+        return [a.name for a in self.archetypes if fmt is None or fmt in a.formats]
 
     def class_of(self, archetype: str) -> str | None:
         for a in self.archetypes:
@@ -106,7 +107,8 @@ def _load(path: str, mtime: float) -> Catalog:
         ranks=raw["ranks"],
         rank_aliases=raw.get("rank_aliases", {}),
         archetypes=[
-            Archetype(a["name"], a["class"], a.get("aliases", []), a.get("key_cards", []))
+            Archetype(a["name"], a["class"], a.get("aliases", []), a.get("key_cards", []),
+                      a.get("formats", ["rotation", "unlimited"]))
             for a in raw["archetypes"]
         ],
     )

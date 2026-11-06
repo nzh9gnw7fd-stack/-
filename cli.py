@@ -5,6 +5,7 @@
   python cli.py collect              # X / RSS から1回収集
   python cli.py extract [--rules]    # 未処理の投稿を抽出（--rules で LLM を使わない）
   python cli.py reextract [--rules]  # 抽出結果を消して全投稿をやり直す（辞書を更新したとき）
+  python cli.py snapshot out.html    # ダッシュボードを1枚の静的 HTML に書き出す
   python cli.py reset                # DB を消す
 """
 from __future__ import annotations
@@ -34,7 +35,17 @@ def main() -> None:
         e = sub.add_parser(name)
         e.add_argument("--rules", action="store_true")
     sub.add_parser("reset")
+    sn = sub.add_parser("snapshot")
+    sn.add_argument("out")
     a = ap.parse_args()
+
+    if a.cmd == "snapshot":
+        from app.snapshot import build
+
+        html = build()
+        Path(a.out).write_text(html, encoding="utf-8")
+        print(f"{a.out} に書き出しました（{len(html.encode()) / 1e6:.1f} MB）")
+        return
 
     if a.cmd == "reset":
         for p in config.DATA_DIR.glob(config.DB_PATH.name + "*"):

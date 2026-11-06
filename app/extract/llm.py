@@ -108,7 +108,12 @@ def extract_batch(cat: Catalog, texts: list[str]) -> list[Extraction] | None:
         return []
     import anthropic
 
-    deck_list = "\n".join(f"- {a.name}（{a.cls}）別名: {'、'.join(a.aliases)}" for a in cat.archetypes)
+    fmt_label = {"rotation": "ローテ", "unlimited": "アンリミ"}
+    deck_list = "\n".join(
+        f"- {a.name}（{a.cls}／{'・'.join(fmt_label.get(f, f) for f in a.formats)}）別名: {'、'.join(a.aliases)}"
+        + (f" キーカード: {'、'.join(a.key_cards)}" if a.key_cards else "")
+        for a in cat.archetypes
+    )
     # 辞書部分は投稿ごとに変わらないので system 側に置き、プロンプトキャッシュを効かせる
     system = [
         {"type": "text", "text": SYSTEM},

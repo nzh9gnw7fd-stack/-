@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SVWB メタトラッカー</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Dela+Gothic+One&display=swap">
 <link rel="stylesheet" href="/static/style.css">
 <script src="/static/vendor/chart.umd.min.js"></script>
 </head>
@@ -13,7 +15,7 @@
     <h1>SVWB メタトラッカー</h1>
     <p class="sub">SNS・ブログ・大会結果の投稿から推定した環境（<span id="updated">—</span>）</p>
   </div>
-  <button id="themeBtn" class="ghost" aria-label="テーマ切り替え">◐</button>
+  <button id="themeBtn" class="ghost" aria-label="ライト／ダークを切り替え">表示切替</button>
 </header>
 
 <section class="filters" aria-label="絞り込み">
@@ -28,9 +30,10 @@
 </section>
 
 <div id="demoBanner" class="banner" hidden>
-  いま表示しているのは <b>架空のデモデータ</b> です。実データを取り込むと置き換わります（下の「データ取り込み」から）。
+  いま表示しているのは <b>架空のデモデータ</b> です。デッキ名は現環境（ニーゲルヘリア神殺事件）のものですが、使用率・勝率などの数値は実際の環境とは関係ありません。<span id="demoHint">実データを取り込むと置き換わります（下の「データ取り込み」から）。</span>
 </div>
 
+<p class="snapnote" id="snapNote" hidden></p>
 <section class="kpis" id="kpis"></section>
 
 <main class="grid">
@@ -62,7 +65,7 @@
     <ul class="posts" id="posts"></ul>
   </article>
 
-  <article class="card">
+  <article class="card" id="importCard">
     <header><h2>データ取り込み</h2><p class="note" id="srcStatus"></p></header>
     <label>形式
       <select id="impKind">

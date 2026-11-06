@@ -1,6 +1,8 @@
 "use strict";
 
 const $ = (s) => document.querySelector(s);
+// 静的スナップショット版（cli.py snapshot で生成）では取り込み・収集・複数ランク選択を無効にする
+const SNAPSHOT = !!window.SVWB_SNAPSHOT;
 const state = { format: "rotation", days: 14, ranks: new Set(), meta: null, sort: { key: "share", dir: -1 }, decks: [] };
 let shareChart = null;
 
@@ -64,7 +66,11 @@ function buildFilters() {
     const b = document.createElement("button");
     b.textContent = r;
     b.setAttribute("aria-pressed", state.ranks.has(r));
-    b.onclick = () => { state.ranks.has(r) ? state.ranks.delete(r) : state.ranks.add(r); buildFilters(); refresh(); };
+    b.onclick = () => {
+      if (SNAPSHOT) { const on = state.ranks.has(r); state.ranks.clear(); if (!on) state.ranks.add(r); }
+      else state.ranks.has(r) ? state.ranks.delete(r) : state.ranks.add(r);
+      buildFilters(); refresh();
+    };
     box.append(b);
   }
 }
@@ -271,8 +277,15 @@ async function refresh() {
 }
 
 (async function init() {
+  if (SNAPSHOT) {
+    $("#importCard").hidden = true;
+    $("#demoHint").hidden = true;
+    $("#fAuto").parentElement.hidden = true;
+    $("#snapNote").hidden = false;
+    $("#snapNote").textContent = `静的スナップショット（${window.SVWB_SNAPSHOT.generated} 生成）。ランク帯は1つずつ選べます。`;
+  }
   state.meta = await api("/api/meta");
   buildFilters();
   await refresh();
-  setInterval(() => { if ($("#fAuto").checked && !document.hidden) refresh(); }, 60_000);
+  if (!SNAPSHOT) setInterval(() => { if ($("#fAuto").checked && !document.hidden) refresh(); }, 60_000);
 })();

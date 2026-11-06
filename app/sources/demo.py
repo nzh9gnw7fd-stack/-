@@ -32,16 +32,24 @@ TEMPLATES_NOISE = ["ガチャ爆死した", "新カードのイラスト最高",
 def _rank_pref(name: str, rank_idx: int, n_ranks: int) -> float:
     """高ランクほどコントロール系、低ランクほどアグロ系が増える。"""
     t = rank_idx / max(1, n_ranks - 1)
-    if any(k in name for k in ("アグロ", "フェイス", "進化")):
+    if any(k in name for k in ("アグロ", "フェイス", "テンポ", "海賊")):
         return 1.3 - 0.6 * t
-    if any(k in name for k in ("コントロール", "ランプ", "守護", "土", "AF", "アーティファクト")):
+    if any(k in name for k in ("コンボ", "ランプ", "守護", "秘術", "AF", "証拠", "クキシロ")):
         return 0.7 + 0.6 * t
     return 1.0
 
 
 def generate(cat: Catalog, days: int = 21, posts_per_day: int = 220, seed: int = 7) -> list[RawPost]:
+    """ローテーション（投稿の約8割）とアンリミテッド（約2割）の両方を作る。"""
+    rot = _generate(cat, cat.archetype_names("rotation"), "", days, posts_per_day, seed)
+    unl = _generate(cat, cat.archetype_names("unlimited"), "アンリミ ", days, max(1, posts_per_day // 4), seed + 1)
+    return rot + unl
+
+
+def _generate(cat: Catalog, names: list[str], prefix: str, days: int, posts_per_day: int, seed: int) -> list[RawPost]:
     rng = random.Random(seed)
-    names = cat.archetype_names()
+    if len(names) < 3:
+        return []
     ranks = cat.ranks
     rank_w = [0.02, 0.05, 0.08, 0.12, 0.18, 0.25, 0.22, 0.08][: len(ranks)]
 
@@ -49,7 +57,7 @@ def generate(cat: Catalog, days: int = 21, posts_per_day: int = 220, seed: int =
     strength = {n: rng.gauss(0, 0.25) for n in names}
     matchup = {(a, b): rng.gauss(0, 0.35) for a in names for b in names}
     # 環境の流れ: 2デッキが途中から台頭、1デッキがナーフで衰退
-    risers = rng.sample(names, 2)
+    risers = rng.sample(names, 2 if len(names) > 4 else 1)
     faller = rng.choice([n for n in names if n not in risers])
     strength[faller] += 0.4
     shift_day = days // 2
@@ -109,5 +117,7 @@ def generate(cat: Catalog, days: int = 21, posts_per_day: int = 220, seed: int =
                 text = rng.choice(TEMPLATES_COMPLAIN).format(opp=opp, rank=rank)
             else:
                 text = rng.choice(TEMPLATES_NOISE)
+            if prefix and kind < 0.92:
+                text = prefix + text
             out.append(RawPost("demo", f"demo-{seed}-{pid}", text, ts.strftime("%Y-%m-%dT%H:%M:%SZ"), author))
     return out

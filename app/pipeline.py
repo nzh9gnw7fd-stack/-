@@ -62,7 +62,7 @@ def _save(conn: sqlite3.Connection, post_id: int, ts: str, author: str | None, e
     conn.execute("UPDATE posts SET extracted = 1, extractor = ? WHERE id = ?", (ex.extractor, post_id))
 
 
-def extract_pending(conn: sqlite3.Connection, use_llm: bool | None = None, limit: int = 5000) -> dict[str, int]:
+def extract_pending(conn: sqlite3.Connection, use_llm: bool | None = None, limit: int = 1_000_000) -> dict[str, int]:
     """未処理の投稿を抽出する。LLM が使えればバッチで、ダメならルールベース。"""
     cat = catalog()
     use_llm = llm.available() if use_llm is None else use_llm

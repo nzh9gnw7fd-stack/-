@@ -63,6 +63,7 @@ X のスクレイピングは利用規約違反になるため実装していま
 python cli.py import posts.txt    # .txt（--- 区切り）/ .csv / .json を取り込み
 python cli.py collect             # X / RSS から1回収集
 python cli.py reextract           # 辞書を更新したあと、全投稿を抽出し直す
+python cli.py snapshot out.html   # サーバーなしで見られる静的 HTML に書き出す
 python cli.py reset               # DB を削除
 python -m pytest -q tests
 ```
@@ -71,7 +72,7 @@ CSV の列: `played_at,deck,opponent,result,rank,author,format`（result は `wi
 
 ## 次にやること（候補）
 
-- `archetypes.json` を現環境のデッキに合わせる（キーカードを埋めると、デッキコードからの判定ができるようになる）
+- `archetypes.json` のキーカード欄を埋める（第10弾「ニーゲルヘリア神殺事件」環境のデッキ名は登録済み。キーカードを埋めると、デッキコードからの判定ができるようになる）
 - デッキコード / デッキ共有サイトの URL からカードリストを取得して `Catalog.from_cards` で判定する
 - 抽出結果を画面から修正できるようにする（修正データは評価セットにもなる）
 - 公開する場合は認証付きの取り込み API とホスティング（例: Fly.io / Render ＋ SQLite→Postgres）
