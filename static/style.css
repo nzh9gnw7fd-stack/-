@@ -147,3 +147,4 @@ table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nu
 body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
 .heat td div, .tier td { font-variant-numeric: tabular-nums; }
 [hidden] { display: none !important; }
+.top button { white-space: nowrap; flex: none; }

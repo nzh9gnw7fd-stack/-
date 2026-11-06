@@ -141,3 +141,48 @@ def test_upper_ranks():
     assert ex("レジェンド引いた！兎ビショ使用 vs キマイラW 勝ち").matches[0].rank is None
     assert ex("Worlds Beyond legendary 融合ネメ使用 vs 海賊ロイ 勝ち").matches[0].rank is None
     assert cat.resolve_rank("legend") == "LEGEND"
+
+
+def test_social_parsers():
+    from app.sources import social
+
+    ma = social.parse_mastodon([
+        {"id": "1", "uri": "https://mstdn.jp/users/a/statuses/1", "url": "https://mstdn.jp/@a/1",
+         "created_at": "2026-11-06T05:40:12.345Z", "visibility": "public",
+         "content": "<p>兎ビショ使用<br>vs キマイラW 勝ち <a href=\"x\">#シャドバ</a></p>", "account": {"acct": "a"}},
+        {"id": "2", "uri": "u2", "url": "u2", "created_at": "2026-11-06T05:40:12Z", "visibility": "public",
+         "content": "", "reblog": {"id": "1"}, "account": {"acct": "b@x"}},
+    ], "mstdn.jp")
+    assert len(ma) == 1 and ma[0].posted_at == "2026-11-06T05:40:12Z"
+    assert ma[0].text.startswith("兎ビショ使用\nvs キマイラW") and ma[0].author.startswith("u_")
+    assert rules.extract(cat, ma[0].text).matches[0].opponent == "スペルキマイラウィッチ"
+
+    mi = social.parse_misskey([
+        {"id": "9x", "createdAt": "2026-11-06T01:02:03.000Z", "text": "融合ネメでLEGEND帯 10勝4敗",
+         "visibility": "public", "user": {"username": "c", "host": None}},
+        {"id": "9y", "createdAt": "2026-11-06T01:02:03.000Z", "text": None, "user": {"username": "d"}},
+    ], "misskey.io")
+    assert [p.url for p in mi] == ["https://misskey.io/notes/9x"]
+
+    bs = social.parse_bluesky([{
+        "uri": "at://did:plc:abc/app.bsky.feed.post/3kxyz", "indexedAt": "2026-11-06T02:00:00.000Z",
+        "author": {"handle": "e.bsky.social", "did": "did:plc:abc"},
+        "record": {"text": "海賊ロイでマスター到達", "createdAt": "2026-11-06T01:59:00.000Z"},
+    }])
+    assert bs[0].url == "https://bsky.app/profile/e.bsky.social/post/3kxyz"
+    assert bs[0].posted_at == "2026-11-06T01:59:00Z"
+
+
+def test_archive_roundtrip():
+    from app import archive
+    from app.sources import RawPost
+
+    with tempfile.TemporaryDirectory() as d:
+        p = Path(d)
+        posts = [RawPost("mastodon", "a", "t1", "2026-10-31T23:00:00Z", "u_1"),
+                 RawPost("mastodon", "b", "t2", "2026-11-01T01:00:00Z", "u_2")]
+        known: set = set()
+        assert archive.append(p, posts, known) == 2
+        assert archive.append(p, posts, known) == 0  # 重複は追記しない
+        assert sorted(f.name for f in p.iterdir()) == ["2026-10.jsonl", "2026-11.jsonl"]
+        assert [x.external_id for x in archive.load(p)] == ["a", "b"]

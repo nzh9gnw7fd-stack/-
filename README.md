@@ -43,6 +43,42 @@ uvicorn app.main:app --reload # http://localhost:8000
    生の勝率には Wilson の 95% 信頼区間を付ける。
 4. **連勝報告は勝率に使わない**（使用率のみに使う）。「〇〇多すぎ」のような愚痴は相手デッキの使用率シグナルとして使う。
 
+## 無料で自動更新する（GitHub Actions + GitHub Pages）
+
+公開リポジトリなら、GitHub Actions と GitHub Pages はどちらも無料。30分ごとに次の流れで自動更新される。
+
+```
+GitHub Actions（30分ごと）
+  ├ archive/*.jsonl（これまでの投稿）から DB を作り直す
+  ├ manual/ のファイルを取り込む（GitHub の画面から追加できる）
+  ├ Mastodon / Misskey / Bluesky / RSS から新着を取得 → archive/ に追記してコミット
+  ├ ルールで抽出・集計
+  └ site/index.html を GitHub Pages に公開（開いたままのページも10分ごとに読み直す）
+```
+
+| データ源 | 費用 | 設定 |
+|---|---|---|
+| Mastodon（mstdn.jp・fedibird.com のハッシュタグ） | 無料・登録不要 | `sources.json` |
+| Misskey（misskey.io のハッシュタグ） | 無料・登録不要 | `sources.json` |
+| Bluesky 検索 | 無料（アカウントのアプリパスワード推奨） | Secrets: `BSKY_HANDLE` / `BSKY_APP_PASSWORD` |
+| RSS / Atom（ブログ、note、YouTube、Google ニュース） | 無料 | `sources.json` の `rss.feeds` |
+| 手動（大会結果 CSV、投稿テキスト） | 無料 | `manual/` にファイルを置く |
+| X API / Claude 抽出 | 有料（任意） | Secrets: `X_BEARER_TOKEN` / `ANTHROPIC_API_KEY` |
+
+### 最初の設定（1回だけ）
+
+1. このリポジトリを **Public** で GitHub に置く
+2. Settings → Pages → Build and deployment の Source を **GitHub Actions** にする
+3. Actions タブ → update-site → **Run workflow** で初回を実行
+4. 数分後に `https://<ユーザー名>.github.io/<リポジトリ名>/` で見られる
+5. （任意）Bluesky の無料アカウントで Settings → Privacy and security → App passwords からパスワードを作り、
+   リポジトリの Settings → Secrets and variables → Actions に `BSKY_HANDLE`（例: `name.bsky.social`）と `BSKY_APP_PASSWORD` を登録
+
+注意:
+- 投稿者のハンドルはハッシュ化して保存し、サイトには本文の先頭90文字と元投稿へのリンクだけを出す
+- 公開リポジトリで60日間まったく動きがないと、GitHub がスケジュール実行を止めることがある（Actions タブから再開できる）
+- 抽出は無料のルールベース。書き方が独特な投稿は取りこぼすので、`archetypes.json` の略称を増やすと精度が上がる
+
 ## データ源の設定（環境変数）
 
 | 変数 | 内容 |
@@ -53,6 +89,7 @@ uvicorn app.main:app --reload # http://localhost:8000
 | `X_BEARER_TOKEN` | X API v2 の Bearer Token（Basic プラン以上が必要）。設定すると定期収集する |
 | `SVWB_X_QUERY` | X の検索クエリ |
 | `SVWB_RSS_FEEDS` | カンマ区切りの RSS/Atom URL |
+| `SVWB_SOCIAL` | `on` で `sources.json` の SNS・RSS から収集（Actions では on） |
 | `SVWB_POLL_MINUTES` | 収集間隔（既定 30 分） |
 
 X のスクレイピングは利用規約違反になるため実装していません。他サイトから取り込むときも、各サイトの規約と robots.txt に従ってください。

@@ -87,7 +87,7 @@ try { const t = localStorage.getItem("theme"); if (t) document.documentElement.d
 // ---------- KPIs ----------
 function renderKpis(s, meta) {
   const src = Object.entries(s.by_source).map(([k, v]) => `${k} ${v.toLocaleString()}`).join(" / ") || "なし";
-  const live = [meta.sources.x ? "X" : null, meta.sources.rss ? `RSS×${meta.sources.rss}` : null].filter(Boolean).join("・") || "手動のみ";
+  const live = [meta.sources.x ? "X" : null, meta.sources.social ? "SNS" : null, meta.sources.rss ? `RSS×${meta.sources.rss}` : null].filter(Boolean).join("・") || "手動のみ";
   const items = [
     ["収集した投稿", s.posts.toLocaleString(), src],
     ["対戦記録", s.matches.toLocaleString(), `使用報告 ${s.reports.toLocaleString()}`],
@@ -282,10 +282,16 @@ async function refresh() {
     $("#demoHint").hidden = true;
     $("#fAuto").parentElement.hidden = true;
     $("#snapNote").hidden = false;
-    $("#snapNote").textContent = `静的スナップショット（${window.SVWB_SNAPSHOT.generated} 生成）。ランク帯は1つずつ選べます。`;
+    const rm = window.SVWB_SNAPSHOT.reloadMinutes;
+    $("#snapNote").textContent = rm
+      ? `集計日時 ${window.SVWB_SNAPSHOT.generated}（自動更新。ページは ${rm} 分ごとに読み込み直します）。ランク帯は1つずつ選べます。`
+      : `静的スナップショット（${window.SVWB_SNAPSHOT.generated} 生成）。ランク帯は1つずつ選べます。`;
   }
   state.meta = await api("/api/meta");
   buildFilters();
   await refresh();
   if (!SNAPSHOT) setInterval(() => { if ($("#fAuto").checked && !document.hidden) refresh(); }, 60_000);
+  // 自動更新サイト版: 開きっぱなしでも新しい集計を読み込み直す
+  const rm = SNAPSHOT && window.SVWB_SNAPSHOT.reloadMinutes;
+  if (rm) setInterval(() => { if (!document.hidden) location.reload(); }, rm * 60_000);
 })();

@@ -22,8 +22,29 @@ X_QUERY = os.getenv(
     '(シャドバ OR シャドウバース OR #シャドバWB OR #ShadowverseWB) (勝 OR 負 OR 連勝 OR マスター OR デッキ) -is:retweet lang:ja',
 )
 
-# RSS/Atom フィード（カンマ区切り）。攻略ブログ・note などの更新を拾う
+# 無料データ源の設定ファイル（Mastodon / Misskey / Bluesky / RSS）
+SOURCES_PATH = Path(os.getenv("SVWB_SOURCES", ROOT / "sources.json"))
+# SNS 収集を有効にするか（ローカル開発で勝手に外部へ取りに行かないよう、既定は off。Actions では on にする）
+SOCIAL_ENABLED = os.getenv("SVWB_SOCIAL", "off") == "on"
+
+
+def sources_config() -> dict:
+    import json
+
+    try:
+        return json.loads(SOURCES_PATH.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+
+
+# RSS/Atom フィード。環境変数（カンマ区切り）と sources.json の両方から読む
 RSS_FEEDS = [u.strip() for u in os.getenv("SVWB_RSS_FEEDS", "").split(",") if u.strip()]
+if SOCIAL_ENABLED:
+    RSS_FEEDS += [u for u in sources_config().get("rss", {}).get("feeds", []) if u not in RSS_FEEDS]
+
+# GitHub Actions 用のアーカイブと手動投入フォルダ
+ARCHIVE_DIR = Path(os.getenv("SVWB_ARCHIVE_DIR", ROOT / "archive"))
+MANUAL_DIR = Path(os.getenv("SVWB_MANUAL_DIR", ROOT / "manual"))
 
 # 収集の間隔（分）
 POLL_MINUTES = int(os.getenv("SVWB_POLL_MINUTES", "30"))

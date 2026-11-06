@@ -30,7 +30,11 @@ def _key(path: str, params: dict) -> str:
     return path + ("?" + urlencode(items) if items else "")
 
 
-def build(title: str = "SVWB メタトラッカー") -> str:
+def build(title: str = "SVWB メタトラッカー", full_document: bool = False, public: bool = False,
+          reload_minutes: int = 0) -> str:
+    """full_document=True で <!doctype html> 付きの単体ページ（GitHub Pages 用）を返す。
+    public=True のとき投稿本文は先頭だけにして元投稿へのリンクを付ける（全文の転載を避ける）。
+    reload_minutes>0 のとき、開いたままのページを定期的に再読み込みして最新版を表示する。"""
     client = TestClient(app)
     cat = catalog()
     data: dict[str, object] = {}
@@ -42,7 +46,8 @@ def build(title: str = "SVWB メタトラッカー") -> str:
 
     meta = client.get("/api/meta").json()
     # スナップショットでは自動収集・抽出の状態は意味がないので固定表示
-    meta["sources"] = {"x": False, "rss": 0, "llm": False}
+    if not public:
+        meta["sources"] = {"x": False, "rss": 0, "social": False, "llm": False}
     data["/api/meta"] = meta
     for fmt in FORMATS:
         for days in DAYS:
@@ -54,6 +59,12 @@ def build(title: str = "SVWB メタトラッカー") -> str:
     grab("/api/posts", limit=60)
     for name in cat.archetype_names():
         grab("/api/posts", limit=60, deck=name)
+    if public:
+        for k, v in data.items():
+            if k.startswith("/api/posts"):
+                for p in v:
+                    if len(p["text"]) > 90:
+                        p["text"] = p["text"][:90] + "…"
 
     html = (config.ROOT / "static" / "index.html").read_text(encoding="utf-8")
     css = (config.ROOT / "static" / "style.css").read_text(encoding="utf-8")
@@ -74,7 +85,7 @@ def build(title: str = "SVWB メタトラッカー") -> str:
     generated = datetime.now(JST).strftime("%Y-%m-%d %H:%M JST")
     payload = json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
     shim = f"""
-window.SVWB_SNAPSHOT = {{ generated: {json.dumps(generated)} }};
+window.SVWB_SNAPSHOT = {{ generated: {json.dumps(generated)}, reloadMinutes: {int(reload_minutes)} }};
 (function () {{
   const DATA = {payload};
   const norm = (u) => {{
@@ -90,7 +101,7 @@ window.SVWB_SNAPSHOT = {{ generated: {json.dumps(generated)} }};
   }};
 }})();
 """
-    return f"""<title>{title}</title>
+    page = f"""<title>{title}</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 {head_links}
 <style>
@@ -103,3 +114,14 @@ window.SVWB_SNAPSHOT = {{ generated: {json.dumps(generated)} }};
 {js}
 </script>
 """
+    if full_document:
+        page = f"""<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="シャドバWBのデッキ使用率・推定勝率・相性・ランク帯別分布を、SNS の公開投稿から自動で推定して表示します。">
+{page}
+</html>
+"""
+    return page

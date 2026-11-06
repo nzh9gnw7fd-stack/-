@@ -9,7 +9,7 @@ from . import config
 from .archetypes import catalog
 from .db import session
 from .extract import DeckReport, Extraction, MatchRec, llm, rules
-from .sources import RawPost, rss, x_api
+from .sources import RawPost, rss, social, x_api
 
 log = logging.getLogger(__name__)
 
@@ -99,17 +99,32 @@ def _state_set(conn: sqlite3.Connection, key: str, value: str) -> None:
     conn.execute("INSERT OR REPLACE INTO state(key, value) VALUES (?, ?)", (key, value))
 
 
+def fetch_sources(conn: sqlite3.Connection) -> tuple[list[RawPost], dict[str, int]]:
+    """有効な全データ源から新着を取得する（保存はしない）。"""
+    posts: list[RawPost] = []
+    stats: dict[str, int] = {}
+    if x_api.enabled():
+        got, newest = x_api.fetch(_state_get(conn, "x_since_id"))
+        posts += got
+        stats["x"] = len(got)
+        if newest:
+            _state_set(conn, "x_since_id", newest)
+    if config.RSS_FEEDS:
+        got = rss.fetch(config.RSS_FEEDS)
+        posts += got
+        stats["rss"] = len(got)
+    if config.SOCIAL_ENABLED:
+        for name, got in social.fetch_all(config.sources_config()).items():
+            posts += got
+            stats[name] = len(got)
+    return posts, stats
+
+
 def collect_once(db_path: Path | None = None) -> dict[str, int]:
     """全ソースから1回収集して抽出まで行う。"""
-    stats: dict[str, int] = {}
     with session(db_path) as conn:
-        if x_api.enabled():
-            posts, newest = x_api.fetch(_state_get(conn, "x_since_id"))
-            stats["x"] = store_posts(conn, posts)
-            if newest:
-                _state_set(conn, "x_since_id", newest)
-        if config.RSS_FEEDS:
-            stats["rss"] = store_posts(conn, rss.fetch(config.RSS_FEEDS))
+        posts, stats = fetch_sources(conn)
+        stats["new"] = store_posts(conn, posts)
         conn.commit()
         stats.update({f"extract_{k}": v for k, v in extract_pending(conn).items()})
     return stats

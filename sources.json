@@ -1,0 +1,24 @@
+{
+  "_comment": "無料で使えるデータ源の設定。GitHub のWeb画面からこのファイルを編集すれば、次回の自動更新から反映される。",
+  "user_agent": "svwb-meta/0.2 (+https://github.com/)",
+  "mastodon": {
+    "_comment": "Mastodon のハッシュタグ公開タイムライン（認証不要・無料）",
+    "instances": ["mstdn.jp", "fedibird.com"],
+    "tags": ["シャドバ", "シャドバWB", "シャドウバース", "シャドバビヨンド", "ShadowverseWB"]
+  },
+  "misskey": {
+    "_comment": "Misskey のハッシュタグ検索（認証不要・無料）",
+    "instances": ["misskey.io"],
+    "tags": ["シャドバ", "シャドバWB", "シャドウバース", "シャドバビヨンド"]
+  },
+  "bluesky": {
+    "_comment": "Bluesky の投稿検索。無料アカウントのアプリパスワードを BSKY_HANDLE / BSKY_APP_PASSWORD に設定すると安定する（未設定なら公開APIを試す）",
+    "queries": ["シャドバ", "シャドウバース", "シャドバWB"]
+  },
+  "rss": {
+    "_comment": "RSS / Atom。攻略ブログ、note のユーザー（https://note.com/ユーザー名/rss）、YouTube チャンネル（https://www.youtube.com/feeds/videos.xml?channel_id=...）、Google ニュース検索など",
+    "feeds": [
+      "https://news.google.com/rss/search?q=%E3%82%B7%E3%83%A3%E3%83%89%E3%83%90+%E3%83%87%E3%83%83%E3%82%AD&hl=ja&gl=JP&ceid=JP:ja"
+    ]
+  }
+}

@@ -29,7 +29,7 @@ async def _poller():
     """X / RSS が設定されていれば定期的に収集する。"""
     while True:
         try:
-            if x_api.enabled() or config.RSS_FEEDS:
+            if x_api.enabled() or config.RSS_FEEDS or config.SOCIAL_ENABLED:
                 stats = await asyncio.to_thread(pipeline.collect_once)
                 log.info("collected: %s", stats)
         except Exception:  # 収集の失敗でサーバーを落とさない
@@ -69,7 +69,8 @@ def meta():
         "classes": list(cat.classes),
         "ranks": cat.ranks,
         "archetypes": [{"name": a.name, "class": a.cls} for a in cat.archetypes],
-        "sources": {"x": x_api.enabled(), "rss": len(config.RSS_FEEDS), "llm": llm.available()},
+        "sources": {"x": x_api.enabled(), "rss": len(config.RSS_FEEDS), "social": config.SOCIAL_ENABLED,
+                    "llm": llm.available()},
         "poll_minutes": config.POLL_MINUTES,
     }
 
