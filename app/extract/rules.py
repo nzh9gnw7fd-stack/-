@@ -137,12 +137,20 @@ def extract(cat: Catalog, text: str) -> Extraction:
     return ex
 
 
+# ゲーム名（Worlds Beyond / シャドバビヨンド）をランク「BEYOND」と誤認しないよう先に消す
+RE_GAME_NAME = re.compile(r"worlds\s*beyond|shadowverse\s*beyond|シャドウ?バ(?:ース)?\s*(?:ワールズ\s*)?ビヨンド", re.IGNORECASE)
+
+
 def _rank_in_text(cat: Catalog, text: str) -> str | None:
-    n = norm(text)
+    n = norm(RE_GAME_NAME.sub(" ", text))
     for rank in sorted(cat.rank_aliases, key=lambda r: -len(r)):
         for alias in cat.rank_aliases[rank]:
             an = norm(alias)
-            if len(an) <= 2:
+            if an.isascii() and an.isalpha() and len(an) > 2:
+                # 英字のランク名（epic/legend 等）は単語の一部（legendary 等）でないときだけ
+                if re.search(rf"(?<![a-z]){re.escape(an)}(?![a-z])", n):
+                    return rank
+            elif len(an) <= 2:
                 # 「AA」「GM」などは英字の一部でないときだけ
                 if re.search(rf"(?<![a-z]){re.escape(an)}(?![a-z])", n):
                     return rank

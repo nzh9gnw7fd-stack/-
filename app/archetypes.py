@@ -77,8 +77,9 @@ class Catalog:
         if not raw:
             return None
         n = norm(raw)
-        if raw in self.ranks:
-            return raw
+        for r in self.ranks:
+            if norm(r) == n:
+                return r
         # 長いランク名（グランドマスター）を先に評価する
         for rank in sorted(self.rank_aliases, key=lambda r: -len(r)):
             for alias in self.rank_aliases[rank]:

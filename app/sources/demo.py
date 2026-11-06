@@ -51,7 +51,9 @@ def _generate(cat: Catalog, names: list[str], prefix: str, days: int, posts_per_
     if len(names) < 3:
         return []
     ranks = cat.ranks
-    rank_w = [0.02, 0.05, 0.08, 0.12, 0.18, 0.25, 0.22, 0.08][: len(ranks)]
+    # 投稿が多いのは中〜上位帯。最上位帯ほど人数が少ない
+    base_w = [0.02, 0.04, 0.06, 0.09, 0.13, 0.18, 0.18, 0.11, 0.08, 0.06, 0.035, 0.015]
+    rank_w = (base_w + [0.01] * len(ranks))[: len(ranks)]
 
     # デッキ強度（隠れ変数）と相性ノイズ
     strength = {n: rng.gauss(0, 0.25) for n in names}

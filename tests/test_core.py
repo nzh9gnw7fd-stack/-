@@ -128,3 +128,16 @@ def test_llm_response_parsing(monkeypatch):
     assert out[2].empty
     schema = sent["output_config"]["format"]["schema"]
     assert "その他ドラゴン" in schema["properties"]["posts"]["items"]["properties"]["matches"]["items"]["properties"]["deck"]["enum"]
+
+
+def test_upper_ranks():
+    assert ex("兎ビショでLEGEND到達 20勝9敗").reports[0].rank == "LEGEND"
+    assert ex("融合ネメ使用 vs 海賊ロイ 勝ち beyond帯").matches[0].rank == "BEYOND"
+    assert ex("証拠ロイでエピック帯 12勝8敗").reports[0].rank == "EPIC"
+    assert ex("テンポE使用 ULTIMATE vs 兎ビショ ○").matches[0].rank == "ULTIMATE"
+    # ゲーム名・レアリティ名はランクと誤認しない
+    assert ex("シャドバビヨンド 兎ビショ使用 vs キマイラW 勝ち").matches[0].rank is None
+    assert ex("#ShadowverseWorldsBeyond 融合ネメ使用 vs 海賊ロイ 勝ち").matches[0].rank is None
+    assert ex("レジェンド引いた！兎ビショ使用 vs キマイラW 勝ち").matches[0].rank is None
+    assert ex("Worlds Beyond legendary 融合ネメ使用 vs 海賊ロイ 勝ち").matches[0].rank is None
+    assert cat.resolve_rank("legend") == "LEGEND"
