@@ -1,0 +1,16 @@
+{
+  "_comment": "note の画面が変わって投稿に失敗したら、ここを直す。text は画面に表示される文言。失敗時のスクリーンショットは out/<記事ID>/ に保存される",
+  "new_url": "https://editor.note.com/new",
+  "login_url": "https://note.com/login",
+  "title": "textarea[placeholder*='タイトル']",
+  "body": "div.ProseMirror[contenteditable='true']",
+  "save_draft_text": "下書き保存",
+  "go_publish_text": "公開に進む",
+  "hashtag_input": "input[placeholder*='ハッシュタグ']",
+  "paid_label_text": "有料",
+  "price_input": "input[name='price'], input[placeholder*='価格'], input[inputmode='numeric']",
+  "paid_line_button_text": "ラインをこの場所に変更",
+  "paid_line_offset": -1,
+  "submit_text": "投稿する",
+  "timeout_ms": 30000
+}

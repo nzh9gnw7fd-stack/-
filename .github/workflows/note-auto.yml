@@ -1,0 +1,78 @@
+# note の有料記事を自動で書いて投稿する（任意）。既定は手動実行のみ。
+# 有料部分の原稿をリポジトリに残さないよう、記事と状態は Actions のキャッシュにだけ保存する。
+# 必要な Secrets: ANTHROPIC_API_KEY / NOTE_STORAGE_STATE_B64 / NOTE_TOPICS_JSON（任意: NOTE_PROFILE）
+name: note-auto
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "有料記事として公開する（オフなら下書き保存）"
+        type: boolean
+        default: false
+  # 毎日自動で動かすときはコメントを外す（毎日 20:13 JST）。最初は手動で何度か試してから
+  # schedule:
+  #   - cron: "13 11 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: note-auto
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: |
+          pip install -r requirements.txt playwright
+          python -m playwright install --with-deps chromium
+
+      - name: Restore state
+        uses: actions/cache/restore@v4
+        with:
+          path: note_auto/out
+          key: note-auto-${{ github.run_id }}
+          restore-keys: note-auto-
+
+      - name: Write secrets to files
+        env:
+          NOTE_STORAGE_STATE_B64: ${{ secrets.NOTE_STORAGE_STATE_B64 }}
+          NOTE_TOPICS_JSON: ${{ secrets.NOTE_TOPICS_JSON }}
+          NOTE_PROFILE: ${{ secrets.NOTE_PROFILE }}
+        run: |
+          mkdir -p note_auto/out
+          echo "$NOTE_STORAGE_STATE_B64" | base64 -d > note_auto/out/note_storage.json
+          printf '%s' "$NOTE_TOPICS_JSON" > note_auto/topics.json
+          if [ -n "$NOTE_PROFILE" ]; then printf '%s' "$NOTE_PROFILE" > note_auto/profile.md; fi
+
+      - name: Generate and post
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ] || [ "${{ inputs.publish }}" = "true" ]; then
+            python -m note_auto run --publish
+          else
+            python -m note_auto run
+          fi
+          python -m note_auto list
+
+      - name: Remove credentials before caching
+        if: always()
+        run: rm -f note_auto/out/note_storage.json note_auto/out/*/*.png
+
+      - name: Save state
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: note_auto/out
+          key: note-auto-${{ github.run_id }}

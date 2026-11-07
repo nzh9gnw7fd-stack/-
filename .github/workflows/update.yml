@@ -8,7 +8,7 @@ on:
   workflow_dispatch:          # Actions 画面の「Run workflow」で今すぐ実行
   push:
     branches: [main]
-    paths-ignore: ["archive/**", "**.md"]
+    paths-ignore: ["archive/**", "**.md", "note_auto/**", "tests/test_note_auto.py", ".github/workflows/note-auto.yml"]
 
 permissions:
   contents: write   # 収集した投稿のアーカイブをコミットするため

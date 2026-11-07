@@ -107,6 +107,11 @@ python -m pytest -q tests
 
 CSV の列: `played_at,deck,opponent,result,rank,author,format`（result は `win` / `loss`）
 
+## おまけ: note 有料記事の自動執筆・投稿
+
+`note_auto/` に、Claude で note の有料記事を書いて品質チェックし、note に下書き保存・公開する仕組みがあります。
+使い方は [note_auto/README.md](note_auto/README.md)。
+
 ## 次にやること（候補）
 
 - `archetypes.json` のキーカード欄を埋める（第10弾「ニーゲルヘリア神殺事件」環境のデッキ名は登録済み。キーカードを埋めると、デッキコードからの判定ができるようになる）

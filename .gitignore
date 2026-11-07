@@ -4,3 +4,7 @@ __pycache__/
 *.pyc
 .pytest_cache/
 dist/
+# note_auto: 有料部分の原稿とログイン状態を含むので絶対にコミットしない
+note_auto/out/
+note_auto/topics.json
+note_auto/profile.md
