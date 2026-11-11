@@ -58,6 +58,9 @@ jobs:
             for i in 1 2 3; do git pull --rebase --quiet && git push && break; sleep 5; done
           fi
 
+      - name: Add city builder game (/town/)
+        run: cp -r citybuilder site/town
+
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site

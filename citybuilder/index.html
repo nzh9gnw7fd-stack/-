@@ -1,0 +1,1067 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#9fd6ee">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="はこにわタウン">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<!--ARTIFACT-HEAD-START-->
+<title>はこにわタウン</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800&display=swap">
+<style>
+/* Layout: full-bleed 3D diorama; HUD floats on top, tool tray docks to the bottom edge. */
+:root{
+  --sky:#9fd6ee;
+  --ink:#22324a;
+  --ink-soft:#5a6b82;
+  --panel:rgba(255,255,255,.86);
+  --panel-line:rgba(34,50,74,.12);
+  --sun:#ffcf4a;
+  --res:#4fb865;
+  --com:#3f8fe0;
+  --ind:#e39a2c;
+  --bad:#e0524a;
+  --good:#2f9e5b;
+  --font:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;
+  color-scheme:light;
+}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0;overflow:hidden;background:var(--sky);color:var(--ink);font-family:var(--font);-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+#scene{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;outline:none}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid var(--com);outline-offset:2px}
+.panel{background:var(--panel);border:1px solid var(--panel-line);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:0 6px 20px rgba(34,50,74,.12)}
+
+/* ---- top HUD ---- */
+.hud{position:fixed;top:calc(env(safe-area-inset-top,0px) + 10px);left:max(10px,env(safe-area-inset-left,0px));right:max(10px,env(safe-area-inset-right,0px));display:flex;gap:8px;align-items:stretch;flex-wrap:wrap;pointer-events:none}
+.hud>*{pointer-events:auto}
+.city{border-radius:14px;padding:6px 12px;display:flex;flex-direction:column;justify-content:center;min-width:0}
+.city input{font:800 17px/1.2 var(--font);color:var(--ink);border:0;background:transparent;width:9.5em;padding:0;-webkit-user-select:text;user-select:text}
+.city span{font-size:12px;color:var(--ink-soft);font-variant-numeric:tabular-nums}
+.stats{border-radius:14px;padding:6px 6px;display:flex;gap:2px;flex:1 1 auto;min-width:0}
+.stat{display:flex;flex-direction:column;justify-content:center;padding:0 10px;min-width:0;border-left:1px solid var(--panel-line)}
+.stat:first-child{border-left:0}
+.stat .k{font-size:11px;color:var(--ink-soft);letter-spacing:.06em}
+.stat b{font-size:17px;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}
+.stat small{font-size:11px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pos{color:var(--good)} .neg{color:var(--bad)}
+.hapbar{height:5px;border-radius:3px;background:rgba(34,50,74,.12);margin-top:3px;overflow:hidden;width:64px}
+.hapbar i{display:block;height:100%;background:var(--good);border-radius:3px;transition:width .4s,background .4s}
+.speed{border-radius:14px;padding:5px;display:flex;gap:3px;align-items:center}
+.speed button,.menu button{border:0;background:transparent;border-radius:10px;width:36px;height:36px;display:grid;place-items:center}
+.speed button[aria-pressed="true"]{background:var(--ink);color:#fff}
+.speed svg,.menu svg,.camctl svg{width:20px;height:20px}
+.menu{border-radius:14px;padding:5px;display:flex;gap:3px}
+.menu button:hover,.speed button:hover:not([aria-pressed="true"]){background:rgba(34,50,74,.08)}
+
+/* ---- RCI demand ---- */
+.rci{position:fixed;right:max(10px,env(safe-area-inset-right,0px));top:calc(env(safe-area-inset-top,0px) + 76px);border-radius:14px;padding:8px 10px 6px;display:flex;gap:8px;align-items:flex-end}
+.rci .col{display:flex;flex-direction:column;align-items:center;gap:3px}
+.rci .track{position:relative;width:12px;height:64px;border-radius:6px;background:rgba(34,50,74,.1);overflow:hidden}
+.rci .track::after{content:"";position:absolute;left:0;right:0;top:50%;height:1px;background:rgba(34,50,74,.35)}
+.rci .fill{position:absolute;left:0;right:0;transition:all .5s}
+.rci label{font-size:11px;font-weight:800}
+.rci .cap{font-size:10px;color:var(--ink-soft);writing-mode:vertical-rl;letter-spacing:.1em;align-self:center}
+
+/* ---- camera controls ---- */
+.camctl{position:fixed;left:max(10px,env(safe-area-inset-left,0px));bottom:calc(env(safe-area-inset-bottom,0px) + 104px);border-radius:14px;padding:5px;display:flex;flex-direction:column;gap:3px}
+.camctl button{border:0;background:transparent;width:38px;height:38px;border-radius:10px;display:grid;place-items:center}
+.camctl button:hover{background:rgba(34,50,74,.08)}
+
+/* ---- tool tray ---- */
+.tray{position:fixed;left:0;right:0;bottom:0;padding:0 max(10px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 10px) max(10px,env(safe-area-inset-left,0px));display:flex;justify-content:center;pointer-events:none}
+.tools{pointer-events:auto;border-radius:18px;padding:6px;display:flex;gap:4px;overflow-x:auto;max-width:100%;scrollbar-width:none}
+.tools::-webkit-scrollbar{display:none}
+.tool{flex:0 0 auto;border:0;background:transparent;border-radius:12px;width:66px;padding:6px 2px 5px;display:flex;flex-direction:column;align-items:center;gap:2px;position:relative}
+.tool:hover{background:rgba(34,50,74,.07)}
+.tool[aria-pressed="true"]{background:var(--sun);box-shadow:inset 0 -3px 0 rgba(34,50,74,.18)}
+.tool svg{width:26px;height:26px}
+.tool .nm{font-size:12px;font-weight:800;line-height:1.1}
+.tool .cs{font-size:10px;color:var(--ink-soft);font-variant-numeric:tabular-nums;line-height:1.1}
+.tool[aria-pressed="true"] .cs{color:var(--ink)}
+.tool:disabled{opacity:.38;cursor:not-allowed}
+.tool .lock{position:absolute;top:3px;right:6px;font-size:9px;font-weight:800;background:var(--ink);color:#fff;border-radius:6px;padding:1px 4px}
+.sw{width:10px;height:10px;border-radius:3px;display:inline-block}
+
+/* ---- floating labels ---- */
+.tip{position:fixed;pointer-events:none;padding:4px 9px;border-radius:9px;font-size:12px;font-weight:800;background:var(--ink);color:#fff;white-space:nowrap;transform:translate(14px,-130%);font-variant-numeric:tabular-nums}
+.tip.bad{background:var(--bad)}
+.info{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 104px);border-radius:16px;padding:12px 14px;width:min(300px,calc(100vw - 32px));box-sizing:border-box}
+.info h3{margin:0 0 6px;font-size:16px;display:flex;align-items:center;gap:8px}
+.info dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:3px 12px;font-size:13px}
+.info dt{color:var(--ink-soft)} .info dd{margin:0;font-weight:700;font-variant-numeric:tabular-nums}
+.info .x{position:absolute;top:8px;right:8px;border:0;background:transparent;width:30px;height:30px;border-radius:8px;font-size:18px;line-height:1}
+.toasts{position:fixed;top:calc(env(safe-area-inset-top,0px) + 80px);left:50%;transform:translateX(-50%);display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none;width:min(360px,calc(100vw - 32px))}
+.toast{background:var(--ink);color:#fff;border-radius:12px;padding:8px 14px;font-size:13px;font-weight:700;text-align:center;animation:pop .35s ease-out}
+.toast.gold{background:var(--sun);color:var(--ink)}
+@keyframes pop{from{transform:translateY(-8px) scale(.96);opacity:0}to{transform:none;opacity:1}}
+
+/* ---- modal ---- */
+.modal{position:fixed;inset:0;display:grid;place-items:center;background:rgba(34,50,74,.28);padding:16px;z-index:5}
+.card{background:#fff;border-radius:22px;padding:22px 22px 18px;width:min(440px,100%);box-sizing:border-box;box-shadow:0 20px 50px rgba(34,50,74,.3);max-height:calc(100% - 20px);overflow:auto}
+.card h2{margin:0 0 4px;font-size:24px;font-weight:800;text-wrap:balance}
+.card p.lead{margin:0 0 14px;color:var(--ink-soft);font-size:14px}
+.steps{list-style:none;margin:0 0 14px;padding:0;display:grid;gap:10px}
+.steps li{display:grid;grid-template-columns:30px 1fr;gap:10px;align-items:start;font-size:14px;line-height:1.55}
+.steps .n{width:28px;height:28px;border-radius:50%;background:var(--sun);display:grid;place-items:center;font-weight:800}
+.steps b{display:block}
+.keys{font-size:12px;color:var(--ink-soft);line-height:1.7;margin:0 0 16px;padding:10px 12px;background:#f1f6fa;border-radius:12px}
+.row{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.btn{border:0;border-radius:12px;padding:10px 18px;font-weight:800;font-size:15px;background:#eef2f6}
+.btn.primary{background:var(--ink);color:#fff}
+.btn.danger{background:var(--bad);color:#fff}
+
+@media (max-width:620px){
+  .stat{padding:0 7px}
+  .stat b{font-size:15px}
+  .city input{font-size:15px;width:7.5em}
+  .rci{top:auto;bottom:calc(env(safe-area-inset-bottom,0px) + 104px);right:max(10px,env(safe-area-inset-right,0px))}
+  .rci .track{height:48px}
+  .tool{width:58px}
+  .hapbar{width:48px}
+}
+@media (prefers-reduced-motion:reduce){.toast{animation:none}}
+</style>
+<!--ARTIFACT-HEAD-END-->
+</head>
+<body>
+<!--ARTIFACT-BODY-START-->
+<canvas id="scene" tabindex="0" aria-label="街のマップ"></canvas>
+
+<header class="hud">
+  <div class="city panel">
+    <input id="cityName" maxlength="12" value="ねこやま町" aria-label="街の名前">
+    <span id="clock">1日目 6:00</span>
+  </div>
+  <div class="stats panel">
+    <div class="stat"><span class="k">資金</span><b id="money">0円</b><small id="balance">±0円/日</small></div>
+    <div class="stat"><span class="k">人口</span><b id="pop">0人</b><small id="jobs">仕事 0</small></div>
+    <div class="stat"><span class="k">しあわせ</span><b id="happy">55</b><div class="hapbar"><i id="hapfill"></i></div></div>
+  </div>
+  <div class="speed panel" role="group" aria-label="時間の速さ">
+    <button data-speed="0" title="一時停止 (Space)" aria-label="一時停止"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg></button>
+    <button data-speed="1" title="ふつう" aria-label="ふつう"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5l11 7-11 7z"/></svg></button>
+    <button data-speed="2" title="はやい" aria-label="はやい"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 5l9 7-9 7zM12 5l9 7-9 7z"/></svg></button>
+    <button data-speed="3" title="とてもはやい" aria-label="とてもはやい"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M1 6l7 6-7 6zM8.5 6l7 6-7 6zM16 6l7 6-7 6z"/></svg></button>
+  </div>
+  <div class="menu panel">
+    <button id="helpBtn" title="遊び方" aria-label="遊び方"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.6 2.6 0 015 1c0 1.8-2.5 2-2.5 3.6"/><circle cx="12" cy="17.3" r=".6" fill="currentColor"/></svg></button>
+    <button id="newBtn" title="新しい街" aria-label="新しい街"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 0113.7-5.6L20 9M20 4v5h-5M20 12a8 8 0 01-13.7 5.6L4 15M4 20v-5h5"/></svg></button>
+  </div>
+</header>
+
+<aside class="rci panel" aria-label="需要">
+  <span class="cap">需要</span>
+  <div class="col"><div class="track"><div class="fill" id="dR"></div></div><label style="color:var(--res)">住</label></div>
+  <div class="col"><div class="track"><div class="fill" id="dC"></div></div><label style="color:var(--com)">商</label></div>
+  <div class="col"><div class="track"><div class="fill" id="dI"></div></div><label style="color:var(--ind)">工</label></div>
+</aside>
+
+<div class="camctl panel">
+  <button id="rotL" title="左に回す (Q)" aria-label="左に回す"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9a8.5 8.5 0 1 1-.5 6"/><path d="M4 4v5h5"/></svg></button>
+  <button id="rotR" title="右に回す (E)" aria-label="右に回す"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 9a8.5 8.5 0 1 0 .5 6"/><path d="M20 4v5h-5"/></svg></button>
+  <button id="zoomIn" title="拡大" aria-label="拡大"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+  <button id="zoomOut" title="縮小" aria-label="縮小"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14"/></svg></button>
+</div>
+
+<div class="tray"><nav class="tools panel" id="tools" aria-label="ツール"></nav></div>
+<div class="tip" id="tip" hidden></div>
+<div class="info panel" id="info" hidden></div>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<div class="modal" id="help" hidden>
+  <div class="card" role="dialog" aria-labelledby="helpTitle">
+    <h2 id="helpTitle">はこにわタウンへようこそ</h2>
+    <p class="lead">道路を引いて区画を決めると、住む人や働く人が集まって街が育っていきます。</p>
+    <ol class="steps">
+      <li><span class="n">1</span><span><b>道路を引く</b>「道路」を選んでマップをドラッグ。川の上は橋になります。</span></li>
+      <li><span class="n">2</span><span><b>区画を塗る</b><span class="sw" style="background:var(--res)"></span> 住宅・<span class="sw" style="background:var(--com)"></span> 商業・<span class="sw" style="background:var(--ind)"></span> 工業を道路沿いに塗ります。</span></li>
+      <li><span class="n">3</span><span><b>需要を見る</b>右の「住・商・工」のバーが上に伸びている区画ほど建物が建ちやすくなります。</span></li>
+      <li><span class="n">4</span><span><b>しあわせを上げる</b>公園や木の近くは地価が上がり、高い建物が建ちます。工場は住宅から離しましょう。人口300人で時計塔が建てられます。</span></li>
+    </ol>
+    <p class="keys">PC：右ドラッグで移動・ホイールで拡大・Q / E で回転・Space で一時停止・1〜9 でツール切替<br>スマホ：「見る」ツールか2本指で移動、ピンチで拡大</p>
+    <div class="row"><button class="btn primary" id="helpClose">はじめる</button></div>
+  </div>
+</div>
+
+<div class="modal" id="confirm" hidden>
+  <div class="card" role="dialog" aria-labelledby="cfTitle">
+    <h2 id="cfTitle">新しい街をつくりますか？</h2>
+    <p class="lead">いまの街は消えて、新しい地形からやり直します。</p>
+    <div class="row"><button class="btn" id="cfNo">やめる</button><button class="btn danger" id="cfYes">新しい街にする</button></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(() => {
+'use strict';
+// ================================================================ constants
+const N = 32, HALF = N / 2;
+const T = { EMPTY:0, ROAD:1, RES:2, COM:3, IND:4, PARK:5, TREE:6, WATER:7, TOWER:8 };
+const COST = { road:50, bridge:400, res:200, com:300, ind:400, park:600, tree:30, tower:25000, bulldoze:20 };
+const RES_CAP = [0, 8, 30, 90], COM_JOBS = [0, 6, 20, 50], IND_JOBS = [0, 10, 25, 45];
+const LV_POP = { 2:[40, 80, 60], 3:[250, 400, 300] }; // population needed before res/com/ind reach this level
+const SPEEDS = [0, 1200, 500, 180];          // ms per in-game hour
+const SAVE_KEY = 'hakoniwa-town-v1';
+const MILESTONES = [50, 100, 200, 300, 500, 1000, 2000, 3000, 5000];
+const DIRS = [[1,0],[-1,0],[0,1],[0,-1]];
+const ZONE_OF = { res:T.RES, com:T.COM, ind:T.IND };
+const ZONE_COLOR = { [T.RES]:0x7fd28c, [T.COM]:0x7db6ee, [T.IND]:0xf0c064 };
+
+const ICON = {
+  pan:'<path d="M6 3.5l12 7-5.2 1.6L10.5 18z" fill="currentColor"/>',
+  road:'<rect x="4" y="3" width="16" height="18" rx="2" fill="#5b6372"/><path d="M12 5v3M12 10.5v3M12 16v3" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>',
+  res:'<path d="M3.5 11.5L12 4.5l8.5 7" fill="none" stroke="#d9554d" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/><path d="M6 10.5V20h12v-9.5" fill="#4fb865"/><rect x="10.2" y="14" width="3.6" height="6" fill="#fff"/>',
+  com:'<path d="M4 9.5L6 4h12l2 5.5z" fill="#f06a6a"/><rect x="5" y="9.5" width="14" height="10.5" fill="#3f8fe0"/><rect x="7.5" y="12" width="9" height="4.5" fill="#cfe6ff"/>',
+  ind:'<path d="M3 20V11l5 3v-3l5 3V7h3.5V3.5h2.5V20z" fill="#e39a2c"/><circle cx="17" cy="2.5" r="1.4" fill="#bbb"/>',
+  park:'<circle cx="9" cy="9" r="5" fill="#4fb865"/><rect x="8.1" y="12" width="1.8" height="7" fill="#8a5a3c"/><rect x="13" y="15" width="8" height="1.8" rx=".9" fill="#8a5a3c"/><path d="M14 16.8v2.5M20 16.8v2.5" stroke="#8a5a3c" stroke-width="1.5"/><path d="M2.5 20h19" stroke="#4fb865" stroke-width="2" stroke-linecap="round"/>',
+  tree:'<path d="M12 2.5l6 8h-3l4.5 6.5h-15L9 10.5H6z" fill="#2f8f55"/><rect x="11" y="17" width="2" height="4.5" fill="#8a5a3c"/>',
+  tower:'<path d="M12 1.5l4 6H8z" fill="#3e6fb0"/><rect x="8.5" y="7.5" width="7" height="14" fill="#e9d9bd"/><circle cx="12" cy="11.5" r="2.4" fill="#fff" stroke="#22324a" stroke-width="1"/><path d="M12 10.3v1.4l1 .6" stroke="#22324a" stroke-width=".9" fill="none"/><rect x="6.5" y="19" width="11" height="2.5" fill="#cbbd9f"/>',
+  bulldoze:'<path d="M6 6l12 12M18 6L6 18" stroke="#e0524a" stroke-width="3" stroke-linecap="round"/>'
+};
+const TOOLS = [
+  { id:'pan',      name:'見る', cost:0 },
+  { id:'road',     name:'道路', cost:COST.road },
+  { id:'res',      name:'住宅', cost:COST.res },
+  { id:'com',      name:'商業', cost:COST.com },
+  { id:'ind',      name:'工業', cost:COST.ind },
+  { id:'park',     name:'公園', cost:COST.park },
+  { id:'tree',     name:'植樹', cost:COST.tree },
+  { id:'tower',    name:'時計塔', cost:COST.tower, unlock:300 },
+  { id:'bulldoze', name:'撤去', cost:COST.bulldoze },
+];
+
+// ================================================================ helpers
+const $ = id => document.getElementById(id);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const yen = n => Math.round(n).toLocaleString('ja-JP') + '円';
+const idx = (x, z) => z * N + x;
+const inside = (x, z) => x >= 0 && z >= 0 && x < N && z < N;
+const frac = v => v - Math.floor(v);
+function mulberry32(a){ return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const storage = {
+  get(){ try { return JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); } catch(e){ return null; } },
+  set(v){ try { localStorage.setItem(SAVE_KEY, JSON.stringify(v)); } catch(e){} },
+};
+
+// ================================================================ state
+let S = null;          // game state
+let tool = 'pan';
+let speed = 1;
+let stats = { pop:0, comJobs:0, indJobs:0, jobs:0, happy:55, dR:1, dC:.5, dI:1, income:0, expense:0, roads:0 };
+let dirty = false;
+
+function newState(seed){
+  seed = seed ?? (Math.random() * 1e9 | 0);
+  const rnd = mulberry32(seed);
+  const s = { seed, t:new Array(N*N).fill(T.EMPTY), lv:new Array(N*N).fill(0), vr:[], w:new Array(N*N).fill(0),
+              money:30000, tick:6, name:'ねこやま町', ms:0, help:false };
+  for (let i = 0; i < N*N; i++) s.vr.push(rnd() * 1000 | 0);
+  // river meandering from north to south on the east side
+  let rx = 20 + (rnd() * 6 | 0);
+  for (let z = 0; z < N; z++) {
+    if (rnd() < 0.35) rx += rnd() < 0.5 ? -1 : 1;
+    rx = clamp(rx, 17, N - 4);
+    for (let k = 0; k < 2; k++) s.t[idx(rx + k, z)] = T.WATER;
+    if (rnd() < 0.25) s.t[idx(rx + 2, z)] = T.WATER;
+  }
+  // forests
+  for (let c = 0; c < 7; c++) {
+    const cx = rnd() * N, cz = rnd() * N, r = 2 + rnd() * 3.5;
+    for (let z = 0; z < N; z++) for (let x = 0; x < N; x++) {
+      const d = Math.hypot(x - cx, z - cz);
+      const i = idx(x, z);
+      if (s.t[i] === T.EMPTY && d < r && rnd() < 0.75 - d / r * 0.5) s.t[i] = T.TREE;
+    }
+  }
+  // starter highway coming in from the west edge
+  for (let x = 0; x <= 11; x++) { const i = idx(x, 15); s.t[i] = T.ROAD; }
+  for (let z = 12; z <= 18; z++) { const i = idx(11, z); s.t[i] = T.ROAD; }
+  return s;
+}
+
+function serialize(){ return JSON.parse(JSON.stringify(S)); }
+function validState(d){ return d && Array.isArray(d.t) && d.t.length === N*N && Array.isArray(d.lv) && Array.isArray(d.vr) && Array.isArray(d.w); }
+
+// ================================================================ three.js setup
+const canvas = $('scene');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias:true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.outputEncoding = THREE.sRGBEncoding;
+const scene = new THREE.Scene();
+const SKY_DAY = new THREE.Color(0x9fd6ee), SKY_DUSK = new THREE.Color(0xf2a983), SKY_NIGHT = new THREE.Color(0x1c2846);
+scene.background = SKY_DAY.clone();
+
+const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 300);
+const cam = { target:new THREE.Vector3(0, 0, 0), az:Math.PI / 4, azGoal:Math.PI / 4, zoom:1.15, el:0.6155 };
+const VIEW = 24;
+function updateCamera(){
+  const w = window.innerWidth, h = window.innerHeight, a = w / h;
+  const s = VIEW / cam.zoom;
+  let fw, fh;
+  if (a >= 1) { fh = s; fw = s * a; } else { fw = s; fh = s / a; }
+  camera.left = -fw / 2; camera.right = fw / 2; camera.top = fh / 2; camera.bottom = -fh / 2;
+  const d = 80, t = cam.target;
+  camera.position.set(t.x + Math.sin(cam.az) * Math.cos(cam.el) * d, t.y + Math.sin(cam.el) * d, t.z + Math.cos(cam.az) * Math.cos(cam.el) * d);
+  camera.lookAt(t);
+  camera.updateProjectionMatrix();
+}
+function resize(){ renderer.setSize(window.innerWidth, window.innerHeight, false); updateCamera(); }
+window.addEventListener('resize', resize);
+
+const hemi = new THREE.HemisphereLight(0xe6f4ff, 0x6f8f55, 0.6);
+const sun = new THREE.DirectionalLight(0xffffff, 0.9);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+Object.assign(sun.shadow.camera, { left:-26, right:26, top:26, bottom:-26, near:1, far:160 });
+sun.shadow.bias = -0.0006;
+sun.shadow.normalBias = 0.02;
+scene.add(hemi, sun, sun.target);
+
+// shared geometry + material cache
+const BOX = new THREE.BoxGeometry(1, 1, 1);
+const CONE4 = new THREE.ConeGeometry(1, 1, 4);
+const CONE = new THREE.ConeGeometry(1, 1, 8);
+const CYL = new THREE.CylinderGeometry(1, 1, 1, 12);
+const SPH = new THREE.SphereGeometry(1, 12, 9);
+const PLANE = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
+const matCache = new Map();
+function mat(color){ let m = matCache.get(color); if (!m) { m = new THREE.MeshLambertMaterial({ color }); matCache.set(color, m); } return m; }
+const winMat = new THREE.MeshLambertMaterial({ color:0x3a4866, emissive:0xffd27a, emissiveIntensity:0 });
+const glowMat = new THREE.MeshLambertMaterial({ color:0xfff6dd, emissive:0xfff0c0, emissiveIntensity:0.2 });
+
+function addMesh(g, geo, m, w, h, d, x, y, z, shadow = true){
+  const mesh = new THREE.Mesh(geo, m);
+  mesh.scale.set(w, h, d);
+  mesh.position.set(x, y, z);
+  mesh.castShadow = shadow; mesh.receiveShadow = true;
+  g.add(mesh);
+  return mesh;
+}
+// box sitting on y (bottom), centered at x/z
+const box = (g, w, h, d, color, x = 0, y = 0, z = 0, m) => addMesh(g, BOX, m || mat(color), w, h, d, x, y + h / 2, z);
+const cyl = (g, r, h, color, x = 0, y = 0, z = 0) => addMesh(g, CYL, mat(color), r, h, r, x, y + h / 2, z);
+function roof4(g, half, h, color, y){ const m = addMesh(g, CONE4, mat(color), half * 1.414, h, half * 1.414, 0, y + h / 2, 0); m.rotation.y = Math.PI / 4; return m; }
+function windowBands(g, w, d, y0, floors, fh){
+  for (let f = 0; f < floors; f++) addMesh(g, BOX, winMat, w + 0.02, fh * 0.38, d + 0.02, 0, y0 + f * fh + fh * 0.5, 0, false);
+}
+function tree(g, x, z, s, kind){
+  cyl(g, 0.035 * s, 0.16 * s, 0x8a5a3c, x, 0, z);
+  if (kind) addMesh(g, CONE, mat(0x2f8f55), 0.17 * s, 0.42 * s, 0.17 * s, x, 0.16 * s + 0.21 * s, z);
+  else addMesh(g, SPH, mat(0x5cb85c), 0.17 * s, 0.17 * s, 0.17 * s, x, 0.16 * s + 0.13 * s, z);
+}
+function plate(g, color, size = 0.94){ addMesh(g, BOX, mat(color), size, 0.03, size, 0, 0.015, 0, false); }
+
+// diorama base + instanced ground tiles
+const base = new THREE.Group();
+scene.add(base);
+addMesh(base, BOX, mat(0x8c6a4c), N + 0.3, 1.4, N + 0.3, 0, -0.3 - 0.7, 0, false);
+addMesh(base, BOX, mat(0x6e7f45), N + 0.3, 0.06, N + 0.3, 0, -0.33, 0, false);
+const ground = new THREE.InstancedMesh(BOX, new THREE.MeshLambertMaterial(), N * N);
+ground.receiveShadow = true;
+scene.add(ground);
+function paintGround(){
+  const m = new THREE.Matrix4(), c = new THREE.Color();
+  for (let i = 0; i < N * N; i++) {
+    const x = i % N, z = i / N | 0;
+    const water = S.t[i] === T.WATER || S.w[i];
+    if (water) { m.makeScale(1, 0.14, 1); m.setPosition(x - HALF + 0.5, -0.23, z - HALF + 0.5); c.setHex(0x5ab6e6); c.offsetHSL(0, 0, (S.vr[i] % 7) * 0.006); }
+    else { m.makeScale(1, 0.3, 1); m.setPosition(x - HALF + 0.5, -0.15, z - HALF + 0.5); c.setHex(((x + z) & 1) ? 0x92d06c : 0x8bc965); c.offsetHSL((S.vr[i] % 10 - 5) * 0.002, 0, (S.vr[i] % 9 - 4) * 0.004); }
+    ground.setMatrixAt(i, m); ground.setColorAt(i, c);
+  }
+  ground.instanceMatrix.needsUpdate = true;
+  if (ground.instanceColor) ground.instanceColor.needsUpdate = true;
+}
+
+// ================================================================ tile visuals
+const objs = new Array(N * N).fill(null);
+const born = [];
+const isRoad = i => S.t[i] === T.ROAD;
+function roadNeighbors(x, z){
+  const out = [];
+  for (const [dx, dz] of DIRS) { const nx = x + dx, nz = z + dz; if (inside(nx, nz) && isRoad(idx(nx, nz))) out.push([dx, dz]); }
+  return out;
+}
+function hasRoadAccess(i){ const x = i % N, z = i / N | 0; return roadNeighbors(x, z).length > 0; }
+
+function buildTile(i, animate){
+  if (objs[i]) { scene.remove(objs[i]); objs[i] = null; }
+  const t = S.t[i];
+  if (t === T.EMPTY || t === T.WATER) return;
+  const x = i % N, z = i / N | 0, v = S.vr[i], lv = S.lv[i];
+  const r = k => frac(Math.sin(v * 12.9898 + k * 78.233) * 43758.5453);
+  const pick = (arr, k) => arr[Math.floor(r(k) * arr.length) % arr.length];
+  const g = new THREE.Group();
+  g.position.set(x - HALF + 0.5, 0, z - HALF + 0.5);
+  g.userData.chimneys = [];
+  const spin = Math.floor(r(9) * 4) * Math.PI / 2;
+
+  if (t === T.ROAD) {
+    const bridge = !!S.w[i];
+    const conn = roadNeighbors(x, z);
+    box(g, 1, bridge ? 0.08 : 0.05, 1, 0x5b6372, 0, bridge ? -0.04 : -0.01, 0);
+    for (const [dx, dz] of conn) {
+      for (const off of [0.14, 0.36]) {
+        const len = 0.12;
+        box(g, dx ? len : 0.035, 0.012, dz ? len : 0.035, 0xf4f1e6, dx * off, 0.04, dz * off);
+      }
+    }
+    for (const [dx, dz] of DIRS) {
+      if (conn.some(c => c[0] === dx && c[1] === dz)) continue;
+      if (bridge) box(g, dz ? 1 : 0.06, 0.14, dx ? 1 : 0.06, 0xe9e4da, dx * 0.47, 0.04, dz * 0.47);
+      else box(g, dz ? 1 : 0.08, 0.06, dx ? 1 : 0.08, 0xc8ccd3, dx * 0.46, 0, dz * 0.46);
+    }
+    if (bridge) cyl(g, 0.09, 0.3, 0xb4b8bf, 0, -0.34, 0);
+  }
+  else if (t === T.RES) {
+    plate(g, lv ? 0x9fd88a : ZONE_COLOR[T.RES], lv ? 0.94 : 0.86);
+    if (lv === 1) {
+      const wall = pick([0xfff4e0, 0xf7d9c4, 0xdcecf5, 0xf3e3a8, 0xe8d5f0, 0xd4f0d8], 1);
+      const rf = pick([0xd9554d, 0x4f7fc9, 0x8a5a44, 0x3e9a7a, 0xe08a3a], 2);
+      const w = 0.48 + r(3) * 0.12, h = 0.3 + r(4) * 0.08;
+      box(g, w, h, w, wall, 0, 0.03, 0);
+      roof4(g, w / 2 + 0.04, 0.26, rf, 0.03 + h);
+      box(g, 0.1, 0.15, 0.02, 0x7a5236, 0, 0.03, w / 2 + 0.01);
+      box(g, 0.1, 0.08, 0.02, 0x3a4866, w / 4, 0.12, w / 2 + 0.01, winMat);
+      if (r(5) > 0.4) tree(g, 0.32, 0.32, 0.8, r(6) > 0.5);
+      if (r(7) > 0.6) tree(g, -0.33, 0.3, 0.7, r(8) > 0.5);
+    } else if (lv === 2) {
+      const wall = pick([0xf6efe3, 0xe3edf5, 0xf5e0d0, 0xe9f2df], 1);
+      const w = 0.68, h = 0.8 + r(3) * 0.15;
+      box(g, w, h, w * 0.85, wall, 0, 0.03, 0);
+      windowBands(g, w, w * 0.85, 0.03, 3, h / 3);
+      box(g, w + 0.05, 0.05, w * 0.85 + 0.05, pick([0xd9554d, 0x5b6372, 0x4f7fc9], 2), 0, 0.03 + h, 0);
+      box(g, 0.16, 0.12, 0.16, 0xdddddd, 0.15, 0.08 + h, 0.1);
+    } else if (lv === 3) {
+      const wall = pick([0xf2f0ea, 0xdfe6ee, 0xeedfd2], 1);
+      const w = 0.7, h = 1.6 + r(3) * 0.6, fl = Math.round(h / 0.27);
+      box(g, w, h, w, wall, 0, 0.03, 0);
+      windowBands(g, w, w, 0.03, fl, h / fl);
+      box(g, 0.28, 0.18, 0.28, 0xcfd3d8, -0.1, 0.03 + h, 0.1);
+      cyl(g, 0.07, 0.16, 0xb4b8bf, 0.18, 0.03 + h, -0.15);
+    }
+  }
+  else if (t === T.COM) {
+    plate(g, lv ? 0xb8c4cc : ZONE_COLOR[T.COM], lv ? 0.94 : 0.86);
+    const aw = pick([0xf06a6a, 0xf0b040, 0x5ac08a, 0x6a8af0, 0xe673b0], 2);
+    if (lv === 1) {
+      const w = 0.74, h = 0.42;
+      box(g, w, h, w * 0.8, pick([0xfff8ec, 0xf0f4f8, 0xfde8d8], 1), 0, 0.03, -0.04);
+      addMesh(g, BOX, winMat, w * 0.8, 0.18, 0.02, 0, 0.17, w * 0.4 - 0.03, false);
+      const a = box(g, w + 0.04, 0.035, 0.2, aw, 0, 0.32, w * 0.4 + 0.06); a.rotation.x = 0.35;
+      box(g, 0.44, 0.12, 0.04, aw, 0, 0.03 + h, 0.05);
+    } else if (lv === 2) {
+      const w = 0.76, h = 1.1 + r(3) * 0.25;
+      box(g, w, h, w, pick([0x8cc0ea, 0x9ad6d0, 0xa9b9ee], 1), 0, 0.03, 0);
+      windowBands(g, w, w, 0.03, 4, h / 4);
+      box(g, w + 0.06, 0.05, 0.22, aw, 0, 0.25, w / 2 + 0.08);
+      box(g, w * 0.5, 0.1, w * 0.5, 0xdfe3e8, 0, 0.03 + h, 0);
+    } else if (lv === 3) {
+      const w = 0.72, h = 2.4 + r(3) * 0.9, fl = Math.round(h / 0.25);
+      box(g, w, h, w, pick([0x6aa4dc, 0x77b7c8, 0x8090c8], 1), 0, 0.03, 0);
+      windowBands(g, w, w, 0.03, fl, h / fl);
+      box(g, w * 0.66, 0.42, w * 0.66, 0xdfe6ee, 0, 0.03 + h, 0);
+      cyl(g, 0.02, 0.55, 0xd0d4da, 0, 0.45 + h, 0);
+      addMesh(g, SPH, glowMat, 0.04, 0.04, 0.04, 0, 1.02 + h, 0, false);
+    }
+  }
+  else if (t === T.IND) {
+    plate(g, lv ? 0xb9b2a4 : ZONE_COLOR[T.IND], lv ? 0.94 : 0.86);
+    if (lv >= 1) {
+      const big = lv >= 2, w = big ? 0.86 : 0.72, d = big ? 0.66 : 0.56, h = big ? 0.5 : 0.36;
+      box(g, w, h, d, pick([0xd6cfc0, 0xc9d0d6, 0xe0d2b8], 1), 0, 0.03, -0.08);
+      for (let k = 0; k < 3; k++) { const s = box(g, w / 3 - 0.02, 0.1, d, 0x8a8f99, -w / 3 + k * w / 3, 0.03 + h, -0.08); s.rotation.x = 0; s.rotation.z = 0.35; }
+      const chH = big ? 1.0 + lv * 0.15 : 0.75;
+      cyl(g, 0.07, chH, 0xb05a48, 0.3, 0.03, 0.26);
+      g.userData.chimneys.push(new THREE.Vector3(0.3, 0.05 + chH, 0.26));
+      if (lv >= 2) { cyl(g, 0.06, chH * 0.85, 0xb05a48, 0.12, 0.03, 0.3); g.userData.chimneys.push(new THREE.Vector3(0.12, 0.05 + chH * 0.85, 0.3)); }
+      if (lv === 3) { cyl(g, 0.11, 0.42, 0xf2f2ee, -0.32, 0.03, 0.28); cyl(g, 0.11, 0.36, 0xe6e9ec, -0.09, 0.03, 0.28); }
+      addMesh(g, BOX, winMat, w * 0.6, 0.08, 0.02, 0, 0.03 + h * 0.6, -0.08 + d / 2 + 0.01, false);
+    }
+  }
+  else if (t === T.PARK) {
+    plate(g, 0x6cc45c, 0.98);
+    addMesh(g, CYL, mat(0x59b0e0), 0.2, 0.03, 0.16, -0.15, 0.04, 0.12, false);
+    tree(g, 0.25, -0.25, 1.15, r(1) > 0.5);
+    tree(g, -0.28, -0.25, 0.95, r(2) > 0.5);
+    tree(g, 0.3, 0.3, 0.85, false);
+    box(g, 0.26, 0.04, 0.08, 0x9a6a44, 0.12, 0.1, 0.12);
+    box(g, 0.03, 0.08, 0.06, 0x5b6372, 0.02, 0.03, 0.12); box(g, 0.03, 0.08, 0.06, 0x5b6372, 0.22, 0.03, 0.12);
+    box(g, 0.03, 0.3, 0.03, 0x4a5262, -0.38, 0.03, 0.38);
+    addMesh(g, SPH, glowMat, 0.05, 0.05, 0.05, -0.38, 0.36, 0.38, false);
+  }
+  else if (t === T.TREE) {
+    const n = 1 + Math.floor(r(1) * 3);
+    const spots = [[-0.18, -0.15], [0.2, 0.1], [-0.1, 0.25], [0.22, -0.25]];
+    for (let k = 0; k < n; k++) { const [sx, sz] = spots[(k + Math.floor(r(2) * 4)) % 4]; tree(g, sx, sz, 0.85 + r(k + 3) * 0.5, r(k + 7) > 0.45); }
+  }
+  else if (t === T.TOWER) {
+    plate(g, 0xd8cfc0, 0.98);
+    box(g, 0.84, 0.22, 0.84, 0xcbbd9f, 0, 0.03, 0);
+    box(g, 0.52, 2.0, 0.52, 0xeee0c6, 0, 0.25, 0);
+    for (const [dx, dz] of DIRS) {
+      const f = addMesh(g, CYL, glowMat, 0.16, 0.02, 0.16, dx * 0.27, 1.95, dz * 0.27, false);
+      f.rotation.set(dz ? Math.PI / 2 : 0, 0, dx ? Math.PI / 2 : 0);
+    }
+    box(g, 0.6, 0.06, 0.6, 0xcbbd9f, 0, 2.22, 0);
+    roof4(g, 0.32, 0.8, 0x3e6fb0, 2.28);
+    addMesh(g, SPH, mat(0xf2c14e), 0.06, 0.06, 0.06, 0, 3.12, 0);
+  }
+
+  if (t !== T.ROAD) g.rotation.y = spin;
+  if (animate) { g.scale.set(1, 0.01, 1); born.push({ g, t0:performance.now() }); }
+  scene.add(g);
+  objs[i] = g;
+}
+function refreshAround(i, animate){
+  buildTile(i, animate);
+  const x = i % N, z = i / N | 0;
+  for (const [dx, dz] of DIRS) { const nx = x + dx, nz = z + dz; if (inside(nx, nz) && isRoad(idx(nx, nz))) buildTile(idx(nx, nz)); }
+}
+function rebuildAll(){ for (let i = 0; i < N * N; i++) buildTile(i); paintGround(); }
+
+// ================================================================ simulation
+function near(i, r, pred){
+  const x = i % N, z = i / N | 0; let c = 0;
+  for (let dz = -r; dz <= r; dz++) for (let dx = -r; dx <= r; dx++) {
+    if (Math.abs(dx) + Math.abs(dz) > r || (!dx && !dz)) continue;
+    const nx = x + dx, nz = z + dz;
+    if (inside(nx, nz) && pred(idx(nx, nz))) c++;
+  }
+  return c;
+}
+function landValue(i){
+  let v = 30;
+  v += Math.min(36, near(i, 3, j => S.t[j] === T.PARK) * 12);
+  v += Math.min(18, near(i, 2, j => S.t[j] === T.WATER) * 6);
+  v += Math.min(12, near(i, 1, j => S.t[j] === T.TREE) * 4);
+  v += near(i, 6, j => S.t[j] === T.TOWER) ? 30 : 0;
+  v += Math.min(15, near(i, 2, j => S.t[j] === T.COM && S.lv[j] > 0) * 5);
+  v -= near(i, 3, j => S.t[j] === T.IND && S.lv[j] > 0) * 12;
+  return clamp(Math.round(v), 0, 100);
+}
+function maxLevel(i, t, pop){
+  const col = t === T.RES ? 0 : t === T.COM ? 1 : 2;
+  let m = 1;
+  if (pop >= LV_POP[2][col]) m = 2;
+  if (pop >= LV_POP[3][col]) m = 3;
+  if (t === T.IND) return m;
+  const lvv = landValue(i) + (t === T.COM ? Math.min(20, near(i, 3, j => S.t[j] === T.RES && S.lv[j] > 0) * 3) : 0);
+  return Math.min(m, lvv < 45 ? 1 : lvv < 72 ? 2 : 3);
+}
+function computeStats(){
+  let pop = 0, comJobs = 0, indJobs = 0, roads = 0, parks = 0, towers = 0, resTiles = 0, covered = 0, polluted = 0;
+  for (let i = 0; i < N * N; i++) {
+    const t = S.t[i], lv = S.lv[i];
+    if (t === T.ROAD) roads++;
+    else if (t === T.PARK) parks++;
+    else if (t === T.TOWER) towers++;
+    else if (t === T.RES) { pop += RES_CAP[lv]; if (lv) { resTiles++; if (near(i, 3, j => S.t[j] === T.PARK) || near(i, 6, j => S.t[j] === T.TOWER)) covered++; if (near(i, 2, j => S.t[j] === T.IND && S.lv[j] > 0)) polluted++; } }
+    else if (t === T.COM) comJobs += COM_JOBS[lv];
+    else if (t === T.IND) indJobs += IND_JOBS[lv];
+  }
+  const jobs = comJobs + indJobs;
+  const work = pop * 0.6;
+  const unemp = work > 0 ? Math.max(0, (work - jobs) / work) : 0;
+  const cov = resTiles ? covered / resTiles : 0, poll = resTiles ? polluted / resTiles : 0;
+  const happy = clamp(Math.round(50 + 35 * cov - 30 * poll - 25 * unemp + (towers ? 10 : 0) + (pop < 30 ? 10 : 0)), 0, 100);
+  const dR = clamp((jobs + 40 - pop) / (40 + pop * 0.3), -1, 1);
+  const dC = clamp((pop * 0.3 + 5 - comJobs) / (10 + comJobs * 0.5), -1, 1);
+  const dI = clamp((pop * 0.4 + 15 - indJobs) / (15 + indJobs * 0.5), -1, 1);
+  const income = pop * 0.5 + comJobs * 0.8 + indJobs * 0.6;
+  const expense = roads * 0.15 + parks * 1 + towers * 10;
+  return { pop, comJobs, indJobs, jobs, roads, parks, towers, happy, dR, dC, dI, income, expense, unemp, poll, cov };
+}
+function simTick(){
+  S.tick++;
+  const s = computeStats();
+  const hapMul = 0.4 + s.happy / 100;
+  const zones = [];
+  for (let i = 0; i < N * N; i++) { const t = S.t[i]; if (t === T.RES || t === T.COM || t === T.IND) zones.push(i); }
+  for (let k = zones.length - 1; k > 0; k--) { const j = Math.random() * (k + 1) | 0; [zones[k], zones[j]] = [zones[j], zones[k]]; }
+  let budget = 3 + Math.floor(zones.length / 15);
+  for (const i of zones) {
+    if (budget <= 0) break;
+    const t = S.t[i], lv = S.lv[i];
+    const dem = t === T.RES ? s.dR : t === T.COM ? s.dC : s.dI;
+    if (!hasRoadAccess(i)) { if (lv > 0 && Math.random() < 0.05) { S.lv[i]--; buildTile(i, false); budget--; } continue; }
+    if (dem > 0 && lv < maxLevel(i, t, s.pop) && Math.random() < 0.05 + 0.18 * dem * hapMul) { S.lv[i]++; buildTile(i, true); budget--; }
+    else if (dem < -0.35 && lv > 1 && Math.random() < 0.02) { S.lv[i]--; buildTile(i, false); budget--; }
+  }
+  S.money += s.income - s.expense;
+  stats = computeStats();
+  // milestones
+  while (S.ms < MILESTONES.length && stats.pop >= MILESTONES[S.ms]) {
+    const m = MILESTONES[S.ms++];
+    toast(`人口${m.toLocaleString()}人を突破しました`, true);
+    if (m === 300) { toast('時計塔が建てられるようになりました', true); renderTools(); }
+  }
+  if (S.tick % 24 === 0) { const d = Math.round((s.income - s.expense) * 24); toast(`${S.tick / 24 + 1}日目の朝　前日の収支 ${d >= 0 ? '+' : ''}${yen(d)}`); }
+  dirty = true;
+  updateHUD();
+}
+
+// ================================================================ building actions
+function check(t, i){
+  const cur = S.t[i];
+  const free = cur === T.EMPTY || cur === T.TREE;
+  switch (t) {
+    case 'road':
+      if (cur === T.ROAD) return { skip:true };
+      if (cur === T.WATER) return { ok:true, cost:COST.bridge };
+      return free ? { ok:true, cost:COST.road } : { ok:false };
+    case 'res': case 'com': case 'ind':
+      if (cur === ZONE_OF[t]) return { skip:true };
+      return free ? { ok:true, cost:COST[t] } : { ok:false };
+    case 'park': case 'tower':
+      return free ? { ok:true, cost:COST[t] } : { ok:false };
+    case 'tree':
+      if (cur === T.TREE) return { skip:true };
+      return cur === T.EMPTY ? { ok:true, cost:COST.tree } : { ok:false };
+    case 'bulldoze':
+      if (cur === T.EMPTY || cur === T.WATER) return { skip:true };
+      return { ok:true, cost:cur === T.TREE ? 0 : COST.bulldoze };
+  }
+  return { skip:true };
+}
+function apply(t, i){
+  if (t === 'road') { if (S.t[i] === T.WATER) S.w[i] = 1; S.t[i] = T.ROAD; S.lv[i] = 0; refreshAround(i, true); }
+  else if (ZONE_OF[t] !== undefined) { S.t[i] = ZONE_OF[t]; S.lv[i] = 0; buildTile(i, true); }
+  else if (t === 'park') { S.t[i] = T.PARK; buildTile(i, true); }
+  else if (t === 'tower') { S.t[i] = T.TOWER; buildTile(i, true); }
+  else if (t === 'tree') { S.t[i] = T.TREE; S.vr[i] = Math.random() * 1000 | 0; buildTile(i, true); }
+  else if (t === 'bulldoze') { if (S.w[i]) { S.t[i] = T.WATER; S.w[i] = 0; } else S.t[i] = T.EMPTY; S.lv[i] = 0; refreshAround(i, false); }
+}
+function selection(t, a, b){
+  if (!a || !b) return [];
+  const out = [];
+  if (t === 'road') {
+    const sx = Math.sign(b.x - a.x), sz = Math.sign(b.z - a.z);
+    for (let x = a.x; ; x += sx) { out.push(idx(x, a.z)); if (x === b.x) break; }
+    if (sz) for (let z = a.z + sz; ; z += sz) { out.push(idx(b.x, z)); if (z === b.z) break; }
+    return out;
+  }
+  if (t === 'tower') return [idx(b.x, b.z)];
+  const x0 = Math.min(a.x, b.x), x1 = Math.max(a.x, b.x), z0 = Math.min(a.z, b.z), z1 = Math.max(a.z, b.z);
+  for (let z = z0; z <= z1; z++) for (let x = x0; x <= x1; x++) out.push(idx(x, z));
+  return out;
+}
+function evaluate(t, list){
+  let total = 0, money = S.money;
+  return { items:list.map(i => { const c = check(t, i); let st = 'skip'; if (!c.skip) { if (!c.ok) st = 'bad'; else if (money >= c.cost) { st = 'ok'; money -= c.cost; total += c.cost; } else st = 'poor'; } return { i, st, cost:c.cost || 0 }; }), total };
+}
+function commit(t, list){
+  const ev = evaluate(t, list);
+  let placed = 0, poor = false;
+  for (const it of ev.items) {
+    if (it.st === 'ok') { S.money -= it.cost; apply(t, it.i); placed++; }
+    else if (it.st === 'poor') poor = true;
+  }
+  if (poor) toast('お金が足りません。時間を進めて税収を待ちましょう');
+  if (placed) { stats = computeStats(); dirty = true; updateHUD(); }
+  return placed;
+}
+
+// ================================================================ cars + smoke
+const cars = [];
+const CAR_COLORS = [0xe94f4f, 0xf5c242, 0x4f8fe9, 0xffffff, 0x59c27a, 0xf08a3a, 0x8a6ad8];
+const center = i => new THREE.Vector3((i % N) - HALF + 0.5, 0.04, (i / N | 0) - HALF + 0.5);
+function nextRoad(from, at){
+  const x = at % N, z = at / N | 0;
+  const opts = roadNeighbors(x, z).map(([dx, dz]) => idx(x + dx, z + dz)).filter(j => j !== from);
+  if (opts.length) return opts[Math.random() * opts.length | 0];
+  return from !== undefined && isRoad(from) ? from : -1;
+}
+function spawnCar(){
+  const roads = [];
+  for (let i = 0; i < N * N; i++) if (isRoad(i) && hasRoadAccess(i)) roads.push(i);
+  if (!roads.length) return;
+  const from = roads[Math.random() * roads.length | 0];
+  const to = nextRoad(undefined, from);
+  if (to < 0) return;
+  const g = new THREE.Group();
+  const col = CAR_COLORS[Math.random() * CAR_COLORS.length | 0];
+  addMesh(g, BOX, mat(col), 0.13, 0.07, 0.24, 0, 0.055, 0, false);
+  addMesh(g, BOX, mat(0xdbe8f5), 0.11, 0.06, 0.12, 0, 0.12, -0.01, false);
+  scene.add(g);
+  cars.push({ g, from, to, t:Math.random(), v:0.7 + Math.random() * 0.6 });
+}
+function updateCars(dt){
+  const want = S && stats.roads > 2 ? Math.min(70, Math.floor((stats.pop + stats.jobs) / 12)) : 0;
+  if (cars.length < want && Math.random() < 0.3) spawnCar();
+  while (cars.length > want) { const c = cars.pop(); scene.remove(c.g); }
+  const mult = speed === 0 ? 0 : 0.6 + speed * 0.4;
+  for (let k = cars.length - 1; k >= 0; k--) {
+    const c = cars[k];
+    if (!isRoad(c.from) || !isRoad(c.to)) { scene.remove(c.g); cars.splice(k, 1); continue; }
+    c.t += dt * c.v * mult;
+    while (c.t >= 1) {
+      const n = nextRoad(c.from, c.to);
+      if (n < 0) { c.t = 0; break; }
+      c.from = c.to; c.to = n; c.t -= 1;
+    }
+    const a = center(c.from), b = center(c.to);
+    const dx = b.x - a.x, dz = b.z - a.z;
+    c.g.position.set(a.x + dx * c.t + dz * 0.14, 0.04, a.z + dz * c.t - dx * 0.14);
+    c.g.rotation.y = Math.atan2(dx, dz);
+  }
+}
+const puffs = [];
+let smokeT = 0;
+function updateSmoke(dt){
+  smokeT += dt;
+  if (speed > 0 && smokeT > 0.4) {
+    smokeT = 0;
+    for (let i = 0; i < N * N && puffs.length < 140; i++) {
+      if (S.t[i] !== T.IND || !S.lv[i] || !objs[i]) continue;
+      for (const ch of objs[i].userData.chimneys) {
+        if (Math.random() > 0.55) continue;
+        const m = new THREE.Mesh(SPH, new THREE.MeshLambertMaterial({ color:0xf1f1f1, transparent:true, opacity:0.85 }));
+        m.position.copy(objs[i].localToWorld(ch.clone()));
+        m.scale.setScalar(0.06);
+        scene.add(m);
+        puffs.push({ m, life:0, dx:(Math.random() - 0.3) * 0.12 });
+      }
+    }
+  }
+  for (let k = puffs.length - 1; k >= 0; k--) {
+    const p = puffs[k];
+    p.life += dt;
+    const L = p.life / 2.6;
+    if (L >= 1) { scene.remove(p.m); p.m.material.dispose(); puffs.splice(k, 1); continue; }
+    p.m.position.y += dt * 0.32; p.m.position.x += dt * p.dx;
+    p.m.scale.setScalar(0.06 + L * 0.16);
+    p.m.material.opacity = 0.85 * (1 - L);
+  }
+}
+
+// ================================================================ lighting (day / night)
+const tmpC = new THREE.Color();
+function updateLighting(hour){
+  const ph = (hour - 6) / 12 * Math.PI;
+  const d = clamp((Math.sin(ph) + 0.18) / 0.45, 0, 1);
+  const dusk = d > 0 && d < 1 ? Math.sin(d * Math.PI) * 0.7 : 0;
+  scene.background.copy(SKY_NIGHT).lerp(SKY_DAY, d).lerp(SKY_DUSK, dusk);
+  hemi.intensity = 0.32 + 0.38 * d;
+  sun.intensity = 0.28 + 0.72 * d;
+  sun.color.setHex(0x9fb4ff).lerp(tmpC.setHex(0xfff2dc), d).lerp(tmpC.setHex(0xffb27a), dusk * 0.8);
+  const day = Math.sin(ph) > -0.1;
+  const dir = day ? new THREE.Vector3(Math.cos(ph) * 0.9, Math.max(0.25, Math.sin(ph)), 0.45) : new THREE.Vector3(-0.4, 0.8, 0.5);
+  dir.normalize().multiplyScalar(60);
+  sun.position.copy(dir); sun.target.position.set(0, 0, 0);
+  winMat.emissiveIntensity = (1 - d) * 1.1;
+  glowMat.emissiveIntensity = 0.2 + (1 - d) * 1.2;
+}
+
+// ================================================================ preview overlays
+const hover = new THREE.Mesh(PLANE, new THREE.MeshBasicMaterial({ color:0xffffff, transparent:true, opacity:0.35, depthWrite:false }));
+hover.position.y = 0.07; hover.visible = false; scene.add(hover);
+const previewPool = [];
+const PREV_COL = { ok:0x5be37a, bad:0xff5a50, poor:0xffa040, skip:0xffffff };
+function showPreview(items){
+  while (previewPool.length < items.length) {
+    const m = new THREE.Mesh(PLANE, new THREE.MeshBasicMaterial({ transparent:true, opacity:0.5, depthWrite:false }));
+    m.renderOrder = 2; scene.add(m); previewPool.push(m);
+  }
+  previewPool.forEach((m, k) => {
+    const it = items[k];
+    m.visible = !!it;
+    if (!it) return;
+    const lift = (S.t[it.i] === T.WATER) ? -0.12 : 0.08;
+    m.position.set((it.i % N) - HALF + 0.5, lift, (it.i / N | 0) - HALF + 0.5);
+    m.material.color.setHex(PREV_COL[it.st]);
+    m.material.opacity = it.st === 'skip' ? 0.18 : 0.55;
+    m.scale.set(0.96, 1, 0.96);
+  });
+}
+
+// ================================================================ input
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), gplane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+function groundAt(cx, cy){
+  const r = canvas.getBoundingClientRect();
+  ndc.set((cx - r.left) / r.width * 2 - 1, -(cy - r.top) / r.height * 2 + 1);
+  ray.setFromCamera(ndc, camera);
+  const p = new THREE.Vector3();
+  return ray.ray.intersectPlane(gplane, p) ? p : null;
+}
+function tileAt(cx, cy){
+  const p = groundAt(cx, cy); if (!p) return null;
+  const x = Math.floor(p.x + HALF), z = Math.floor(p.z + HALF);
+  return inside(x, z) ? { x, z } : null;
+}
+function clampTile(cx, cy){
+  const p = groundAt(cx, cy); if (!p) return null;
+  return { x:clamp(Math.floor(p.x + HALF), 0, N - 1), z:clamp(Math.floor(p.z + HALF), 0, N - 1) };
+}
+function clampTarget(){ cam.target.x = clamp(cam.target.x, -HALF, HALF); cam.target.z = clamp(cam.target.z, -HALF, HALF); }
+function zoomAt(f, cx, cy){
+  const g0 = cx != null ? groundAt(cx, cy) : null;
+  cam.zoom = clamp(cam.zoom * f, 0.55, 4);
+  updateCamera();
+  if (g0) { const g1 = groundAt(cx, cy); if (g1) { cam.target.add(g0.sub(g1)); clampTarget(); updateCamera(); } }
+}
+
+const pointers = new Map();
+let act = null;
+const tip = $('tip');
+function setTip(text, x, y, bad){
+  if (!text) { tip.hidden = true; return; }
+  tip.hidden = false; tip.textContent = text; tip.classList.toggle('bad', !!bad);
+  tip.style.left = x + 'px'; tip.style.top = y + 'px';
+}
+function updateBuildPreview(cx, cy){
+  const ev = evaluate(tool, selection(tool, act.a, act.b));
+  act.ev = ev;
+  showPreview(ev.items);
+  const bad = ev.items.some(it => it.st === 'poor');
+  const none = !ev.items.some(it => it.st === 'ok');
+  setTip(none ? (bad ? 'お金が足りません' : 'ここには置けません') : (tool === 'bulldoze' ? '撤去 ' : '') + yen(ev.total), cx, cy, none);
+}
+function endAction(){ act = null; showPreview([]); setTip(null); }
+
+canvas.addEventListener('contextmenu', e => e.preventDefault());
+canvas.addEventListener('pointerdown', e => {
+  canvas.focus({ preventScroll:true });
+  try { canvas.setPointerCapture(e.pointerId); } catch(_){}
+  pointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
+  hideInfo();
+  if (pointers.size === 2) {
+    const [p1, p2] = [...pointers.values()];
+    const mx = (p1.x + p2.x) / 2, my = (p1.y + p2.y) / 2;
+    showPreview([]); setTip(null);
+    act = { type:'pinch', dist:Math.hypot(p1.x - p2.x, p1.y - p2.y), zoom:cam.zoom, g0:groundAt(mx, my) };
+    return;
+  }
+  if (pointers.size > 2) return;
+  if (e.button === 1 || e.button === 2 || tool === 'pan') {
+    act = { type:'pan', g0:groundAt(e.clientX, e.clientY), sx:e.clientX, sy:e.clientY, moved:false };
+  } else {
+    const t = tileAt(e.clientX, e.clientY);
+    if (!t) { act = { type:'pan', g0:groundAt(e.clientX, e.clientY), sx:e.clientX, sy:e.clientY, moved:false }; return; }
+    act = { type:'build', a:t, b:t };
+    updateBuildPreview(e.clientX, e.clientY);
+  }
+});
+canvas.addEventListener('pointermove', e => {
+  if (pointers.has(e.pointerId)) pointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
+  const t = tileAt(e.clientX, e.clientY);
+  if (t && e.pointerType === 'mouse') { hover.visible = true; hover.position.x = t.x - HALF + 0.5; hover.position.z = t.z - HALF + 0.5; }
+  else hover.visible = false;
+  if (!act) {
+    if (t && e.pointerType === 'mouse' && tool !== 'pan') { const c = check(tool, idx(t.x, t.z)); setTip(c.skip ? null : c.ok ? yen(c.cost) : 'ここには置けません', e.clientX, e.clientY, !c.ok); }
+    else setTip(null);
+    return;
+  }
+  if (act.type === 'pan' && act.g0) {
+    if (Math.hypot(e.clientX - act.sx, e.clientY - act.sy) > 6) act.moved = true;
+    const g1 = groundAt(e.clientX, e.clientY);
+    if (g1) { cam.target.add(act.g0.clone().sub(g1)); clampTarget(); updateCamera(); }
+  } else if (act.type === 'pinch' && pointers.size >= 2) {
+    const [p1, p2] = [...pointers.values()];
+    const d = Math.hypot(p1.x - p2.x, p1.y - p2.y);
+    cam.zoom = clamp(act.zoom * d / Math.max(1, act.dist), 0.55, 4);
+    updateCamera();
+    const g1 = groundAt((p1.x + p2.x) / 2, (p1.y + p2.y) / 2);
+    if (act.g0 && g1) { cam.target.add(act.g0.clone().sub(g1)); clampTarget(); updateCamera(); }
+  } else if (act.type === 'build') {
+    const tb = clampTile(e.clientX, e.clientY);
+    if (tb && (tb.x !== act.b.x || tb.z !== act.b.z)) { act.b = tb; }
+    updateBuildPreview(e.clientX, e.clientY);
+  }
+});
+function pointerEnd(e){
+  pointers.delete(e.pointerId);
+  if (!act) return;
+  if (act.type === 'build' && e.type === 'pointerup') { commit(tool, selection(tool, act.a, act.b)); endAction(); }
+  else if (act.type === 'pan') { if (!act.moved && tool === 'pan' && e.type === 'pointerup') { const t = tileAt(e.clientX, e.clientY); if (t) showInfo(idx(t.x, t.z)); } endAction(); }
+  else if (act.type === 'pinch') { if (pointers.size < 2) endAction(); }
+  else endAction();
+}
+canvas.addEventListener('pointerup', pointerEnd);
+canvas.addEventListener('pointercancel', pointerEnd);
+canvas.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse' && !act) { hover.visible = false; setTip(null); } });
+canvas.addEventListener('wheel', e => { e.preventDefault(); zoomAt(Math.exp(-e.deltaY * 0.0015), e.clientX, e.clientY); }, { passive:false });
+
+window.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT') return;
+  if (e.key === 'q' || e.key === 'Q') rotate(-1);
+  else if (e.key === 'e' || e.key === 'E') rotate(1);
+  else if (e.key === ' ') { e.preventDefault(); setSpeed(speed === 0 ? 1 : 0); }
+  else if (e.key === 'Escape') { endAction(); hideInfo(); }
+  else if (/^[1-9]$/.test(e.key)) { const tl = TOOLS[+e.key - 1]; if (tl && !locked(tl)) setTool(tl.id); }
+  else if (e.key === '+' || e.key === '=') zoomAt(1.2);
+  else if (e.key === '-') zoomAt(1 / 1.2);
+});
+function rotate(dir){ cam.azGoal += dir * Math.PI / 2; }
+
+// ================================================================ UI
+const locked = tl => tl.unlock && (S ? S.ms : 0) < MILESTONES.indexOf(tl.unlock) + 1;
+function renderTools(){
+  const nav = $('tools');
+  nav.innerHTML = '';
+  TOOLS.forEach((tl, k) => {
+    const b = document.createElement('button');
+    b.className = 'tool'; b.dataset.tool = tl.id;
+    b.setAttribute('aria-pressed', String(tool === tl.id));
+    b.title = `${tl.name}${tl.cost ? '（' + yen(tl.cost) + '）' : ''}  [${k + 1}]`;
+    const lk = locked(tl);
+    b.disabled = !!lk;
+    b.innerHTML = `<svg viewBox="0 0 24 24">${ICON[tl.id]}</svg><span class="nm">${tl.name}</span><span class="cs">${tl.id === 'pan' ? '移動・情報' : yen(tl.cost)}</span>${lk ? `<span class="lock">${tl.unlock}人</span>` : ''}`;
+    b.addEventListener('click', () => setTool(tl.id));
+    nav.appendChild(b);
+  });
+}
+function setTool(id){
+  tool = id;
+  document.querySelectorAll('.tool').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.tool === id)));
+  canvas.style.cursor = id === 'pan' ? 'grab' : 'crosshair';
+  endAction();
+}
+function setSpeed(v){
+  speed = v;
+  document.querySelectorAll('.speed button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.speed === v)));
+}
+document.querySelectorAll('.speed button').forEach(b => b.addEventListener('click', () => setSpeed(+b.dataset.speed)));
+$('rotL').onclick = () => rotate(-1);
+$('rotR').onclick = () => rotate(1);
+$('zoomIn').onclick = () => zoomAt(1.25);
+$('zoomOut').onclick = () => zoomAt(1 / 1.25);
+$('helpBtn').onclick = () => { $('help').hidden = false; };
+$('helpClose').onclick = () => { $('help').hidden = true; S.help = true; dirty = true; };
+$('newBtn').onclick = () => { $('confirm').hidden = false; };
+$('cfNo').onclick = () => { $('confirm').hidden = true; };
+$('cfYes').onclick = () => { $('confirm').hidden = true; const keepName = S.name; start(newState()); S.name = keepName; S.help = true; $('cityName').value = keepName; dirty = true; toast('新しい土地に着きました'); };
+$('cityName').addEventListener('input', e => { S.name = e.target.value.trim() || 'ねこやま町'; dirty = true; });
+
+function fillBar(el, v, color){
+  const h = Math.abs(v) * 50;
+  el.style.background = color;
+  el.style.height = h + '%';
+  el.style.top = v >= 0 ? (50 - h) + '%' : '50%';
+  el.style.opacity = v >= 0 ? 1 : 0.45;
+}
+let lastClock = '';
+function updateHUD(){
+  const s = stats;
+  $('money').textContent = yen(S.money);
+  $('money').className = S.money < 0 ? 'neg' : '';
+  const bal = Math.round((s.income - s.expense) * 24);
+  $('balance').textContent = (bal >= 0 ? '+' : '') + yen(bal) + '/日';
+  $('balance').className = bal >= 0 ? 'pos' : 'neg';
+  $('pop').textContent = s.pop.toLocaleString('ja-JP') + '人';
+  $('jobs').textContent = '仕事 ' + s.jobs.toLocaleString('ja-JP');
+  $('happy').textContent = s.happy;
+  const hf = $('hapfill'); hf.style.width = s.happy + '%'; hf.style.background = s.happy >= 60 ? 'var(--good)' : s.happy >= 40 ? 'var(--sun)' : 'var(--bad)';
+  fillBar($('dR'), s.dR, 'var(--res)'); fillBar($('dC'), s.dC, 'var(--com)'); fillBar($('dI'), s.dI, 'var(--ind)');
+  if (S.ms && document.querySelector('.tool .lock') && !locked(TOOLS[7])) renderTools();
+}
+function updateClock(hour){
+  const day = Math.floor(S.tick / 24) + 1;
+  const h = Math.floor(hour) % 24, m = Math.floor((hour % 1) * 6) * 10;
+  const txt = `${day}日目 ${h}:${String(m).padStart(2, '0')}`;
+  if (txt !== lastClock) { $('clock').textContent = txt; lastClock = txt; }
+}
+const NAMES = {
+  [T.RES]:['住宅地（空き）', '一軒家', 'アパート', 'マンション'],
+  [T.COM]:['商業地（空き）', '商店', 'オフィスビル', '高層ビル'],
+  [T.IND]:['工業地（空き）', '町工場', '工場', '大工場'],
+};
+function showInfo(i){
+  const t = S.t[i], lv = S.lv[i], el = $('info');
+  let title = '', rows = [];
+  const lvv = landValue(i);
+  if (NAMES[t]) {
+    title = NAMES[t][lv];
+    const access = hasRoadAccess(i);
+    if (t === T.RES) rows.push(['人口', RES_CAP[lv] + '人']);
+    else rows.push(['仕事', (t === T.COM ? COM_JOBS : IND_JOBS)[lv] + '人分']);
+    rows.push(['レベル', lv ? `${lv} / ${maxLevel(i, t, stats.pop)}（いまの上限）` : 'まだ建物がありません']);
+    rows.push(['地価', lvv]);
+    rows.push(['道路', access ? 'つながっています' : '<span class="neg">道路に接していないと建ちません</span>']);
+  } else if (t === T.ROAD) { title = S.w[i] ? '橋' : '道路'; rows.push(['維持費', '3.6円/日']); rows.push(['ヒント', '道路は車が走り、となりの区画に建物が建てられるようになる']); }
+  else if (t === T.PARK) { title = '公園'; rows.push(['効果', 'まわり3マスの地価としあわせが上がる']); rows.push(['維持費', '24円/日']); }
+  else if (t === T.TOWER) { title = '時計塔'; rows.push(['効果', 'まわり6マスの地価が大きく上がる']); rows.push(['維持費', '240円/日']); }
+  else if (t === T.TREE) { title = '木'; rows.push(['効果', 'となりの地価が少し上がる']); rows.push(['撤去', '無料']); }
+  else if (t === T.WATER) { title = '川'; rows.push(['ヒント', '道路を引くと橋になります（' + yen(COST.bridge) + '）']); rows.push(['地価', 'まわり2マスが少し上がる']); }
+  else { title = '空き地'; rows.push(['地価', lvv]); }
+  el.innerHTML = `<button class="x" aria-label="閉じる">×</button><h3>${title}</h3><dl>${rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>`;
+  el.querySelector('.x').onclick = hideInfo;
+  el.hidden = false;
+}
+function hideInfo(){ $('info').hidden = true; }
+function toast(msg, gold){
+  const box = $('toasts');
+  const d = document.createElement('div');
+  d.className = 'toast' + (gold ? ' gold' : '');
+  d.textContent = msg;
+  box.appendChild(d);
+  while (box.children.length > 3) box.firstChild.remove();
+  setTimeout(() => d.remove(), 3600);
+}
+
+// ================================================================ loop
+let acc = 0, last = performance.now();
+function frame(now){
+  const dt = Math.min(0.1, (now - last) / 1000); last = now;
+  if (S) {
+    if (speed > 0) {
+      acc += dt * 1000;
+      const step = SPEEDS[speed];
+      let n = 0;
+      while (acc >= step && n < 5) { simTick(); acc -= step; n++; }
+      if (n === 5) acc = 0;
+    }
+    const hour = (S.tick % 24) + (speed > 0 ? acc / SPEEDS[speed] : 0);
+    updateLighting(hour);
+    updateClock(hour);
+    updateCars(dt);
+    updateSmoke(dt);
+  }
+  // building pop-in
+  for (let k = born.length - 1; k >= 0; k--) {
+    const b = born[k], p = Math.min(1, (now - b.t0) / 420);
+    const c1 = 1.70158, c3 = c1 + 1, e = 1 + c3 * Math.pow(p - 1, 3) + c1 * Math.pow(p - 1, 2);
+    b.g.scale.y = Math.max(0.01, e);
+    if (p >= 1) { b.g.scale.y = 1; born.splice(k, 1); }
+  }
+  if (Math.abs(cam.az - cam.azGoal) > 0.001) { cam.az += (cam.azGoal - cam.az) * Math.min(1, dt * 9); updateCamera(); }
+  renderer.render(scene, camera);
+  requestAnimationFrame(frame);
+}
+
+function start(data){
+  for (const c of cars) scene.remove(c.g); cars.length = 0;
+  for (const p of puffs) scene.remove(p.m); puffs.length = 0;
+  S = validState(data) ? data : newState();
+  rebuildAll();
+  stats = computeStats();
+  $('cityName').value = S.name;
+  renderTools(); setTool('pan'); setSpeed(1); updateHUD();
+  $('help').hidden = !!S.help;
+  dirty = true;
+}
+setInterval(() => { if (dirty && S) { storage.set(S); dirty = false; } }, 4000);
+window.addEventListener('pagehide', () => { if (S) storage.set(S); });
+window.claude?.hot?.snapshot?.(() => serialize());
+
+resize();
+const boot = data => { start(validState(data) ? data : storage.get()); requestAnimationFrame(frame); };
+if (window.claude?.hot?.ready) window.claude.hot.ready(boot); else boot(window.claude?.hot?.data ?? null);
+})();
+</script>
+<!--ARTIFACT-BODY-END-->
+<script>
+if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
+</script>
+</body>
+</html>
