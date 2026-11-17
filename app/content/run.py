@@ -68,6 +68,8 @@ def run(out_dir: Path, publish: bool = False, kind: str | None = None, topics: b
     _dump(d / "weekly_report.md", writer.weekly_report(dg))
     meta = {}
     if make_video and (dg.publishable or force):
+        if creds := video.attach_media(sc.scenes):
+            sc.description += "\n\n映像・写真: " + " / ".join(creds)
         meta = video.render(sc.scenes, d / "short.mp4", tts=tts, scale=scale, brand=brand, bgm=video.pick_bgm())
         report["svwb_video"] = meta
     ok = (dg.publishable or force) and not done_today
@@ -124,6 +126,8 @@ def run(out_dir: Path, publish: bool = False, kind: str | None = None, topics: b
                 if tts.credit:
                     tsc.description += f"\n{tts.credit}"
                 _dump(td / "script.json", {**tsc.to_dict(), "review": review, "idea": idea.to_dict()})
+                if make_video and (creds := video.attach_media(tsc.scenes)):
+                    tsc.description += "\n\n映像・写真: " + " / ".join(creds)
                 tmeta = video.render(tsc.scenes, td / "short.mp4", tts=tts, scale=scale,
                                      brand=settings().get("topic_brand") or brand, bgm=video.pick_bgm(),
                                      footer="※効果には個人差があります" if review["risk"] != "low" else "") if make_video else {}

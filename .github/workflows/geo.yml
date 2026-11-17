@@ -1,0 +1,95 @@
+# 世界地理チャンネル: 週2回（水・土）、長尺の解説動画と予告ショートを1本ずつ作ってアップロードする。
+# 必要な Secrets: ANTHROPIC_API_KEY（台本）, YT_CLIENT_ID / YT_CLIENT_SECRET / YT_GEO_REFRESH_TOKEN（投稿先チャンネル）
+# あると良い Secrets: PEXELS_API_KEY / PIXABAY_API_KEY（現地の実写映像。無ければ Wikimedia Commons の写真）
+name: geo-channel
+
+on:
+  schedule:
+    - cron: "17 10 * * 3,6"   # 水・土 19:17 JST
+  workflow_dispatch:
+    inputs:
+      topic:
+        description: "テーマ名（geo_topics.json。空なら次の未作成テーマ）"
+        default: ""
+      publish:
+        description: "YouTube にアップロードする"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: geo-channel
+  cancel-in-progress: false
+
+jobs:
+  episode:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install ffmpeg and Japanese fonts
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg fonts-noto-cjk > /dev/null
+
+      - run: pip install -r requirements.txt pyopenjtalk-plus numpy
+
+      - name: Start VOICEVOX engine
+        if: vars.SVWB_TTS != 'off'
+        run: |
+          docker run -d --rm -p 50021:50021 --name voicevox voicevox/voicevox_engine:cpu-latest
+          for i in $(seq 1 60); do curl -sf http://127.0.0.1:50021/version && break; sleep 3; done
+
+      # 衛星画像タイルと素材のキャッシュ（同じ場所を何度も取りに行かない）
+      - uses: actions/cache@v4
+        with:
+          path: data/tile_cache
+          key: tiles-${{ github.run_id }}
+          restore-keys: tiles-
+
+      - name: Make episode
+        env:
+          SVWB_VOICEVOX_URL: ${{ vars.SVWB_TTS != 'off' && 'http://127.0.0.1:50021' || '' }}
+          SVWB_GEO_PRIVACY: ${{ vars.SVWB_GEO_PRIVACY || 'private' }}
+          SVWB_GEO_PLAYLIST: ${{ vars.SVWB_GEO_PLAYLIST }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+          PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
+          YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
+          YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
+          YT_GEO_REFRESH_TOKEN: ${{ secrets.YT_GEO_REFRESH_TOKEN }}
+          TOPIC: ${{ inputs.topic }}
+        run: |
+          ARGS="--out dist/geo"
+          if [ "${{ github.event_name }}" = "schedule" ] || [ "${{ inputs.publish }}" = "true" ]; then ARGS="$ARGS --publish"; fi
+          if [ -n "$TOPIC" ]; then python cli.py geo $ARGS --topic "$TOPIC"; else python cli.py geo $ARGS; fi
+          cat dist/geo/summary.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Save history
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add content/geo_history.json 2>/dev/null || true
+          if ! git diff --cached --quiet; then
+            git commit -m "content: 地理チャンネルの投稿履歴を更新 [skip ci]"
+            for i in 1 2 3; do git pull --rebase --quiet && git push && break; sleep 5; done
+          fi
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: geo-${{ github.run_number }}
+          path: |
+            dist/geo/*.mp4
+            dist/geo/*.jpg
+            dist/geo/*.txt
+            dist/geo/*.json
+            dist/geo/*.md
+          retention-days: 7

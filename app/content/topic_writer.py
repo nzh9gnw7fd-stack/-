@@ -40,14 +40,16 @@ high（事実確認しないと誤情報になりうる・センシティブ）�
 
 
 def _schema() -> dict:
-    point = {"type": "object", "properties": {"head": {"type": "string"}, "say": {"type": "string"}},
-             "required": ["head", "say"], "additionalProperties": False}
+    point = {"type": "object", "properties": {"head": {"type": "string"}, "say": {"type": "string"},
+                                              "visual_en": {"type": "string"}},
+             "required": ["head", "say", "visual_en"], "additionalProperties": False}
     return {
         "type": "object",
         "properties": {
             "title": {"type": "string"},
             "hook": {"type": "string"},
             "hook_screen": {"type": "string"},
+            "hook_visual_en": {"type": "string"},
             "points": {"type": "array", "items": point},
             "outro": {"type": "string"},
             "description": {"type": "string"},
@@ -56,7 +58,7 @@ def _schema() -> dict:
             "needs_fact_check": {"type": "boolean"},
             "risk_note": {"type": "string"},
         },
-        "required": ["title", "hook", "hook_screen", "points", "outro", "description", "hashtags", "risk",
+        "required": ["title", "hook", "hook_screen", "hook_visual_en", "points", "outro", "description", "hashtags", "risk",
                      "needs_fact_check", "risk_note"],
         "additionalProperties": False,
     }
@@ -84,6 +86,7 @@ def write(idea: Idea, date: str) -> tuple[Script, dict] | None:
               f"使ってよいフックの型（例）: {' / '.join(rnd.sample(hooks, min(3, len(hooks))))}\n"
               f"このジャンルの注意: {n.get('guard', '')}\n\n"
               "title は全角40文字以内で、検索されやすい言葉を前に。hook_screen は画面に大きく出す15文字以内の文字。"
+              "visual_en は、そのポイントの背景に流す実写映像の英語の検索語（2〜4語。人物の顔より、物や場面。例: 'piggy bank coins'）。"
               "description は3〜5行（最後に『※個人差があります』等の注意が必要なら入れる）。hashtags は5個（#なし）。")
     try:
         resp = anthropic.Anthropic().beta.messages.create(
@@ -120,10 +123,11 @@ def to_script(idea: Idea, data: dict) -> Script:
     col = NICHE_COLORS.get(idea.niche, "#8e8d86")
     label = niches().get(idea.niche, {}).get("label", "")
     points = data["points"][:4]
-    scenes = [Scene("title", data["hook"], heading=label, big=data["hook_screen"][:18], color=col)]
+    scenes = [Scene("title", data["hook"], heading=label, big=data["hook_screen"][:18], color=col,
+                    query=data.get("hook_visual_en", ""))]
     for i, p in enumerate(points, 1):
         scenes.append(Scene("focus", p["say"], heading=f"{i}つ目", big=p["head"][:14], color=col,
-                            badge=f"{i}/{len(points)}"))
+                            badge=f"{i}/{len(points)}", query=p.get("visual_en", "")))
     scenes.append(Scene("cta", data["outro"], heading="あとで見返す用に", big="保存＆フォロー",
                         sub="毎日ためになるショートを投稿中", color=col))
     tags = [t.lstrip("#") for t in data["hashtags"]][:6]

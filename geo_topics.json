@@ -1,0 +1,41 @@
+{
+  "_comment": "世界地理チャンネルで扱うテーマの順番待ちリスト。上から順に、まだ作っていないものを1本ずつ作る。座標は Wikipedia（wiki_en）から自動で取るので書かなくてよい（書けばそちらを優先）。angle は切り口（台本を書く AI への指示）。zoom は最初の衛星ズームの寄り具合（8=広域〜13=街区）。全部使い切ったら AI が新しいテーマを提案して追加する。",
+  "channel": {
+    "name": "",
+    "_name": "チャンネル名（動画の最後と概要欄に出る）。例: ちきゅう地理ラボ",
+    "narration_speaker": 13,
+    "_narration_speaker": "VOICEVOX の話者 ID（13=青山龍星 は落ち着いた解説向き）"
+  },
+  "topics": [
+    {"name": "ナミブ砂漠", "wiki_ja": "ナミブ砂漠", "wiki_en": "Namib", "zoom": 8.5, "angle": "海のそばなのに雨が降らない海岸砂漠の仕組み（寒流・ベンゲラ海流と逆転層）と、霧から水を得る生き物たち"},
+    {"name": "リシャット構造", "wiki_ja": "リシャット構造", "wiki_en": "Richat Structure", "zoom": 9.5, "angle": "サハラの目と呼ばれる同心円の正体（隕石説の否定と、ドーム状の隆起と侵食）"},
+    {"name": "ダナキル低地", "wiki_ja": "ダナキル砂漠", "wiki_en": "Danakil Depression", "zoom": 10, "angle": "海面下の灼熱地帯とプレートが裂ける場所、塩の採掘と色鮮やかな熱水地帯"},
+    {"name": "バイカル湖", "wiki_ja": "バイカル湖", "wiki_en": "Lake Baikal", "zoom": 7.5, "angle": "世界最深・最古の湖ができた理由（地溝帯）と、固有種バイカルアザラシなどの独自の生態系"},
+    {"name": "ウユニ塩原", "wiki_ja": "ウユニ塩原", "wiki_en": "Salar de Uyuni", "zoom": 9, "angle": "高地の巨大な塩原ができた過程（古代湖の干上がり）と、リチウム資源"},
+    {"name": "ソコトラ島", "wiki_ja": "ソコトラ島", "wiki_en": "Socotra", "zoom": 9, "angle": "大陸から離れて独自進化した植物たち（竜血樹）と、島の地理的な孤立"},
+    {"name": "シンクヴェトリル", "wiki_ja": "シンクヴェトリル国立公園", "wiki_en": "Þingvellir", "zoom": 11, "angle": "プレートが離れていく境界（ギャオ）を地上で見られる場所と、アイスランドの火山と氷河"},
+    {"name": "死海", "wiki_ja": "死海", "wiki_en": "Dead Sea", "zoom": 9.5, "angle": "地表で最も低い湖と高い塩分の理由（内陸湖・蒸発）、そして水位低下と陥没穴の問題"},
+    {"name": "ハロン湾", "wiki_ja": "ハロン湾", "wiki_en": "Hạ Long Bay", "zoom": 10.5, "angle": "海に沈んだカルスト地形（タワーカルスト）のでき方と、水上の暮らし"},
+    {"name": "アタカマ砂漠", "wiki_ja": "アタカマ砂漠", "wiki_en": "Atacama Desert", "zoom": 8, "angle": "世界で最も乾いた場所の条件（雨陰・寒流・亜熱帯高圧帯）と、天文台や鉱山"},
+    {"name": "ロライマ山", "wiki_ja": "ロライマ山", "wiki_en": "Mount Roraima", "zoom": 11.5, "angle": "テーブルマウンテン（テプイ）の地質と、山頂で孤立して進化した生き物"},
+    {"name": "オカバンゴ・デルタ", "wiki_ja": "オカバンゴ・デルタ", "wiki_en": "Okavango Delta", "zoom": 8.5, "angle": "海に注がない内陸デルタの仕組みと、季節の洪水がつくる野生動物の楽園"},
+    {"name": "アラル海", "wiki_ja": "アラル海", "wiki_en": "Aral Sea", "zoom": 7.5, "angle": "かつて世界4位の湖が消えていった理由（灌漑）と、残された環境問題"},
+    {"name": "トンレサップ湖", "wiki_ja": "トンレサップ湖", "wiki_en": "Tonlé Sap", "zoom": 9, "angle": "季節で川の流れが逆転する仕組みと、水上村と漁業"},
+    {"name": "パナマ運河", "wiki_ja": "パナマ運河", "wiki_en": "Panama Canal", "zoom": 10.5, "angle": "山を越える運河の仕組み（閘門式）と、地峡という地形、水不足の課題"},
+    {"name": "オランダの干拓地", "wiki_ja": "ポルダー", "wiki_en": "Afsluitdijk", "zoom": 10, "angle": "海より低い国土をつくった干拓（ポルダー）と堤防、風車と排水の仕組み"},
+    {"name": "ヴェネツィアの潟", "wiki_ja": "ヴェネツィア", "wiki_en": "Venetian Lagoon", "zoom": 11, "angle": "潟（ラグーン）の上に築かれた都市と、高潮から街を守る可動式の堤防MOSE"},
+    {"name": "カッパドキア", "wiki_ja": "カッパドキア", "wiki_en": "Cappadocia", "zoom": 11, "angle": "火山灰の地層が侵食されてできたきのこ岩と、岩をくりぬいた地下都市"},
+    {"name": "張家界", "wiki_ja": "武陵源", "wiki_en": "Zhangjiajie National Forest Park", "zoom": 12, "angle": "砂岩の柱が林立する地形のでき方と、霧と植生"},
+    {"name": "グランドキャニオン", "wiki_ja": "グランド・キャニオン", "wiki_en": "Grand Canyon", "zoom": 10, "angle": "地層が教えてくれる20億年の歴史と、川が台地を削る下刻作用"},
+    {"name": "イエローストーン", "wiki_ja": "イエローストーン国立公園", "wiki_en": "Yellowstone Caldera", "zoom": 9, "angle": "超巨大火山のカルデラとホットスポット、間欠泉と微生物マット"},
+    {"name": "ガラパゴス諸島", "wiki_ja": "ガラパゴス諸島", "wiki_en": "Galápagos Islands", "zoom": 8, "angle": "ホットスポットで生まれた火山島と海流、島ごとに違う進化"},
+    {"name": "ツィンギ・デ・ベマラ", "wiki_ja": "ツィンギ・デ・ベマラ厳正自然保護区", "wiki_en": "Tsingy de Bemaraha National Park", "zoom": 11, "angle": "石灰岩の針の森ができた仕組みと、その中に暮らすキツネザル"},
+    {"name": "モン・サン＝ミシェル", "wiki_ja": "モン・サン＝ミシェル", "wiki_en": "Mont-Saint-Michel", "zoom": 12, "angle": "潮の干満差が大きい湾の地理と、陸続きになる島・堆積との戦い"},
+    {"name": "ファンディ湾", "wiki_ja": "ファンディ湾", "wiki_en": "Bay of Fundy", "zoom": 8.5, "angle": "世界最大級の潮位差が生まれる理由（湾の形と共振）と、潮汐の侵食地形"},
+    {"name": "ナトロン湖", "wiki_ja": "ナトロン湖", "wiki_en": "Lake Natron", "zoom": 10, "angle": "強アルカリの赤い湖とフラミンゴ、大地溝帯の火山"},
+    {"name": "ダルヴァザのガス・クレーター", "wiki_ja": "ダルヴァザ", "wiki_en": "Darvaza gas crater", "zoom": 13, "angle": "燃え続ける穴の正体と、カラクム砂漠の地下資源"},
+    {"name": "ボスポラス海峡", "wiki_ja": "ボスポラス海峡", "wiki_en": "Bosporus", "zoom": 10.5, "angle": "アジアとヨーロッパを分ける海峡のでき方と、二層の海流、交通の要衝としての歴史"},
+    {"name": "グレートバリアリーフ", "wiki_ja": "グレート・バリア・リーフ", "wiki_en": "Great Barrier Reef", "zoom": 8, "angle": "サンゴ礁の種類（裾礁・堡礁・環礁）と、白化現象の仕組み"},
+    {"name": "スヴァールバル諸島", "wiki_ja": "スヴァールバル諸島", "wiki_en": "Svalbard", "zoom": 8, "angle": "北極圏の島々の氷河と永久凍土、白夜と極夜、種子貯蔵庫"}
+  ]
+}

@@ -11,6 +11,7 @@
   python cli.py content [--publish]  # 動画・記事・SNS 文・ネタ候補を作る（--publish で設定済みの所へ投稿）
   python cli.py trends               # 伸びている話題を調べて「今日のネタ候補」を表示
   python cli.py youtube-auth         # YouTube のリフレッシュトークンを取得（自分の PC で1回だけ）
+  python cli.py geo [--publish]      # 世界地理の長尺動画を1本作る（--episode で台本ファイルを指定も可）
 """
 from __future__ import annotations
 
@@ -55,6 +56,12 @@ def main() -> None:
     ct.add_argument("--no-video", action="store_true", help="動画を書き出さない（台本だけ）")
     ct.add_argument("--scale", type=float, default=1.0, help="解像度の倍率（確認用に 0.5 など）")
     sub.add_parser("trends", help="伸びている話題を調べる")
+    gp = sub.add_parser("geo", help="世界地理の長尺動画を作る")
+    gp.add_argument("--out", default="dist/geo")
+    gp.add_argument("--publish", action="store_true")
+    gp.add_argument("--topic", help="geo_topics.json のテーマ名（省略で次の未作成テーマ）")
+    gp.add_argument("--episode", help="台本ファイル（例: episodes/sample_geiranger.json）")
+    gp.add_argument("--size", default="1920x1080")
     ya = sub.add_parser("youtube-auth", help="YouTube のリフレッシュトークンを取得する")
     ya.add_argument("--client-id", default=__import__("os").getenv("YT_CLIENT_ID"))
     ya.add_argument("--client-secret", default=__import__("os").getenv("YT_CLIENT_SECRET"))
@@ -66,6 +73,18 @@ def main() -> None:
         run(Path(a.out), publish=a.publish, kind=a.kind, topics=not a.no_topics,
                   topic_videos=a.topic_videos, force=a.force, make_video=not a.no_video, scale=a.scale)
         print((Path(a.out) / "summary.md").read_text(encoding="utf-8"))
+        return
+
+    if a.cmd == "geo":
+        from app.geo.run import run as geo_run
+
+        w, h = (int(x) for x in a.size.split("x"))
+        rep = geo_run(Path(a.out), publish=a.publish, topic_name=a.topic,
+                      episode_file=Path(a.episode) if a.episode else None, w=w, h=h)
+        summary = Path(a.out) / "summary.md"
+        print(summary.read_text(encoding="utf-8") if summary.exists() else json.dumps(rep, ensure_ascii=False))
+        if rep.get("error"):
+            sys.exit(rep["error"])
         return
 
     if a.cmd == "trends":

@@ -31,13 +31,30 @@ API = "https://www.googleapis.com/youtube/v3"
 SCOPES = "https://www.googleapis.com/auth/youtube.upload https://www.googleapis.com/auth/youtube"
 
 
-def configured() -> bool:
-    return all(os.getenv(k) for k in ("YT_CLIENT_ID", "YT_CLIENT_SECRET", "YT_REFRESH_TOKEN"))
+def configured(channel: str = "main") -> bool:
+    base = all(os.getenv(k) for k in ("YT_CLIENT_ID", "YT_CLIENT_SECRET"))
+    if channel == "geo":
+        return base and bool(os.getenv("YT_GEO_REFRESH_TOKEN"))
+    return base and bool(os.getenv("YT_REFRESH_TOKEN"))
+
+
+def set_thumbnail(video_id: str, path: Path, channel: str = "main") -> bool:
+    """カスタムサムネイル（チャンネルの電話番号確認が必要）。"""
+    try:
+        r = httpx.post("https://www.googleapis.com/upload/youtube/v3/thumbnails/set", params={"videoId": video_id},
+                       headers={"Authorization": f"Bearer {access_token(channel)}", "Content-Type": "image/jpeg"},
+                       content=path.read_bytes(), timeout=120)
+        r.raise_for_status()
+        return True
+    except httpx.HTTPError as e:
+        log.warning("サムネイルの設定に失敗（チャンネルの確認が済んでいないかも）: %s", e)
+        return False
 
 
 def access_token(channel: str = "main") -> str:
     """channel="topic" なら話題ネタ用チャンネルのトークン（YT_TOPIC_REFRESH_TOKEN、無ければメインと同じ）。"""
-    rt = (os.getenv("YT_TOPIC_REFRESH_TOKEN") if channel == "topic" else None) or os.environ["YT_REFRESH_TOKEN"]
+    env = {"topic": "YT_TOPIC_REFRESH_TOKEN", "geo": "YT_GEO_REFRESH_TOKEN"}.get(channel, "")
+    rt = (os.getenv(env) if env else None) or os.environ["YT_REFRESH_TOKEN"]
     r = httpx.post(TOKEN_URL, data={
         "client_id": os.environ["YT_CLIENT_ID"], "client_secret": os.environ["YT_CLIENT_SECRET"],
         "refresh_token": rt, "grant_type": "refresh_token"}, timeout=30)

@@ -43,6 +43,10 @@ class Scene:
     color: str = DEFAULT_COLOR
     bars: list[list] = field(default_factory=list)   # [ラベル, 0〜1の値, 表示文字列, 色]
     badge: str = ""
+    query: str = ""                 # 背景に使う映像・写真の検索語（英語）
+    media: str = ""                 # 背景素材のファイル（query から自動で探す）
+    media_kind: str = ""            # video | image
+    credit: str = ""                # 素材のクレジット
 
 
 @dataclass
@@ -94,6 +98,9 @@ def script(dg: Digest, kind: str | None = None, tts_credit: str = "") -> Script:
     scenes = {"ranking": _ranking, "trend": _trend, "winrate": _winrate,
               "matchup": _matchup, "rank": _rank}[kind](dg, rnd, head, period)
     scenes.append(_cta(rnd))
+    # 冒頭と最後は実写の背景（ゲームの公式素材は使わない）
+    scenes[0].query = rnd.choice(["trading card game table", "esports gaming neon", "smartphone game play"])
+    scenes[-1].query = rnd.choice(["smartphone gaming night", "gaming setup neon lights"])
     title, desc, tags = _metadata(dg, kind, rnd, tts_credit)
     return Script(kind, scenes, title, desc, tags)
 

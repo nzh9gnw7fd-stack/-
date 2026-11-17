@@ -150,9 +150,26 @@ class Renderer:
             self._bg[accent] = img
         return self._bg[accent]
 
+    def _footage(self, bg: Image.Image, accent: str) -> Image.Image:
+        """実写の背景を暗くして、上下にグラデーションを掛けて文字を読みやすくする。"""
+        if not hasattr(self, "_shade"):
+            sh = Image.new("RGBA", (self.w, self.h))
+            d = ImageDraw.Draw(sh)
+            for y in range(self.h):
+                k = y / self.h
+                a = int(150 + 90 * max(0.0, (abs(k - 0.45) - 0.15) / 0.4))  # 中央は少し明るく
+                d.line([(0, y), (self.w, y)], fill=(5, 8, 16, min(235, a)))
+            self._shade = sh
+        img = bg.convert("RGBA")
+        img.alpha_composite(self._shade)
+        return img.convert("RGB")
+
     # ------------------------------------------------------------ 1フレーム
-    def frame(self, sc: Scene, t: float, progress: float) -> Image.Image:
-        img = self.background(sc.color).copy()
+    def frame(self, sc: Scene, t: float, progress: float, bg: Image.Image | None = None) -> Image.Image:
+        if bg is not None:
+            img = self._footage(bg, sc.color)
+        else:
+            img = self.background(sc.color).copy()
         d = ImageDraw.Draw(img)
         S, F = self.S, self.fonts
         accent = hex_rgb(sc.color)
@@ -282,6 +299,36 @@ def _resample(pcm: bytes, src: int, dst: int) -> bytes:
     return out.tobytes()
 
 
+def _bg_source(sc: Scene, w: int, h: int, dur: float):
+    if not sc.media or not Path(sc.media).exists():
+        return None
+    from ..media import compose
+
+    if sc.media_kind == "video":
+        return compose.VideoClip(sc.media, w, h, FPS)
+    return compose.KenBurns(Image.open(sc.media), w, h, dur, seed=len(sc.caption))
+
+
+def attach_media(scenes: list[Scene], orientation: str = "portrait") -> list[str]:
+    """query が付いたシーンに、背景の映像・写真を探して付ける。クレジットの一覧を返す。"""
+    from ..media import assets
+
+    used: set[str] = set()
+    credits = []
+    for sc in scenes:
+        if not sc.query or sc.media:
+            continue
+        for a in assets.find(sc.query, "video", n=2, orientation=orientation, exclude=used):
+            a = assets.download(a)
+            if a:
+                used.add(a.url)
+                sc.media, sc.media_kind = a.path, a.kind
+                sc.credit = f"{'映像' if a.kind == 'video' else '写真'}: {a.credit} ({a.source})"
+                credits.append(f"{a.title or sc.query} — {a.credit}, {a.license}, {a.page}".strip(" ,—"))
+                break
+    return list(dict.fromkeys(credits))
+
+
 def pick_bgm() -> Path | None:
     from .. import config
 
@@ -327,8 +374,18 @@ def render(scenes: list[Scene], out: Path, tts: TTS | None = None, scale: float 
             for x in timed:
                 nframes = int(round(x.dur * FPS))
                 cached = None
+                src = _bg_source(x.scene, r.w, r.h, x.dur)
                 for k in range(nframes):
                     t = k / FPS
+                    if src is not None:
+                        img = r.frame(x.scene, t, (x.start + t) / total, src.frame(t))
+                        if x.scene.credit:
+                            ImageDraw.Draw(img).text((r.w - r.S(40), r.S(250)), x.scene.credit[:60], font=r.fonts(22),
+                                                     fill=(200, 200, 210), anchor="ra")
+                        proc.stdin.write(img.tobytes())
+                        if thumb is None and x.scene.kind == "title" and t >= 1.0:
+                            thumb = img
+                        continue
                     if cached is None or t < 1.2:
                         img = r.frame(x.scene, t, (x.start + t) / total)
                         buf = img.tobytes()
@@ -337,6 +394,8 @@ def render(scenes: list[Scene], out: Path, tts: TTS | None = None, scale: float 
                         if thumb is None and x.scene.kind == "title" and t >= 1.0:
                             thumb = img
                     proc.stdin.write(cached or buf)
+                if src is not None:
+                    src.close()
         finally:
             proc.stdin.close()
             code = proc.wait()
