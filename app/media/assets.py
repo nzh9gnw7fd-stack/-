@@ -71,6 +71,19 @@ def _polite_get(c: httpx.Client, url: str, params: dict, tries: int = 5) -> http
     return r
 
 
+def _relevant(query: str, text: str) -> bool:
+    """Commons の検索はゆるい（"smartphone bill" で大統領の写真が出る）ので、
+    検索語の 2/3 以上がファイル名か説明に含まれるものだけ使う。"""
+    import math
+
+    words = [w for w in re.findall(r"[\w']+", query.lower()) if len(w) > 2]
+    if not words:
+        return True
+    t = text.lower()
+    hit = sum(1 for w in words if w in t or (w.endswith("s") and w[:-1] in t))
+    return hit >= math.ceil(len(words) * 2 / 3)
+
+
 def _strip(s: str) -> str:
     return re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", "", s or ""))).strip()[:120]
 
@@ -94,6 +107,8 @@ def commons(query: str, kind: str = "image", n: int = 6, client: httpx.Client | 
         meta = ii.get("extmetadata", {})
         lic = _strip(meta.get("LicenseShortName", {}).get("value", ""))
         if not lic or NG_LICENSES.search(lic) or not OK_LICENSES.search(lic):
+            continue
+        if not _relevant(query, p.get("title", "") + " " + _strip(meta.get("ImageDescription", {}).get("value", ""))[:200]):
             continue
         mime = ii.get("mime", "")
         if kind == "image" and not mime.startswith("image/"):
@@ -174,7 +189,9 @@ def find(query: str, kind: str = "video", n: int = 3, orientation: str = "landsc
     """映像を優先して探し、無ければ写真にする。exclude は使用済み URL（同じ素材の連続使用を避ける）。"""
     exclude = exclude or set()
     found: list[Asset] = []
-    order = ([("video", pexels), ("video", pixabay), ("video", commons)] if kind == "video" else []) + \
+    # Commons の映像は記録映像が中心で一般的な場面には合わないので、横長（地理の長尺）だけで使う
+    videos = [("video", pexels), ("video", pixabay)] + ([("video", commons)] if orientation == "landscape" else [])
+    order = (videos if kind == "video" else []) + \
             [("image", pexels), ("image", pixabay), ("image", commons)]
     for k, fn in order:
         res = fn(query, k, n * 2, orientation) if fn is pexels else fn(query, k, n * 2)

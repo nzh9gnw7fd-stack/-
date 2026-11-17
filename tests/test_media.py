@@ -39,15 +39,15 @@ def test_commons_license_filter(monkeypatch):
                                    "url": url, "descriptionurl": "https://commons.wikimedia.org/wiki/File:a.jpg",
                                    "extmetadata": {"LicenseShortName": {"value": lic}, "Artist": {"value": "<a>Taro</a>"}}}]}
                 return {"query": {"pages": {
-                    "1": {"index": 1, "title": "File:ok.jpg", **info("CC BY-SA 4.0")},
-                    "2": {"index": 2, "title": "File:nc.jpg", **info("CC BY-NC 2.0")},
-                    "3": {"index": 3, "title": "File:small.jpg", **info("CC0", w=300)},
-                    "4": {"index": 4, "title": "File:fairuse.jpg", **info("Fair use")},
+                    "1": {"index": 1, "title": "File:fjord ok.jpg", **info("CC BY-SA 4.0")},
+                    "2": {"index": 2, "title": "File:fjord nc.jpg", **info("CC BY-NC 2.0")},
+                    "3": {"index": 3, "title": "File:fjord small.jpg", **info("CC0", w=300)},
+                    "4": {"index": 4, "title": "File:fjord fairuse.jpg", **info("Fair use")},
                 }}}
         return R()
     monkeypatch.setattr(assets, "_polite_get", fake)
     got = assets.commons("fjord", "image", 5)
-    assert [a.title for a in got] == ["ok.jpg"]
+    assert [a.title for a in got] == ["fjord ok.jpg"]
     assert got[0].credit == "Taro" and got[0].license == "CC BY-SA 4.0"
 
 
@@ -106,3 +106,9 @@ def test_compose_render_small():
     ]
     m = compose.render(shots, TMP / "c.mp4", 320, 180, 12, tts=None)
     assert Path(m["path"]).stat().st_size > 1000 and len(m["starts"]) == 2 and m["duration"] > 4
+
+
+def test_relevance_filter():
+    assert not assets._relevant("smartphone bill", "File:Bill Clinton 5-23-16 Stockton California.jpg")
+    assert assets._relevant("piggy bank coins", "File:Colorful plastic chicken piggy bank.jpg")
+    assert assets._relevant("Seven Sisters waterfall Geiranger", "File:0626 The seven sisters - Geiranger Fjord water falls")
