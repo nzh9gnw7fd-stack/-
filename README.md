@@ -43,6 +43,24 @@ uvicorn app.main:app --reload # http://localhost:8000
    生の勝率には Wilson の 95% 信頼区間を付ける。
 4. **連勝報告は勝率に使わない**（使用率のみに使う）。「〇〇多すぎ」のような愚痴は相手デッキの使用率シグナルとして使う。
 
+## 収益化（ショート動画・SNS・ブログの自動配信）
+
+集計データと、伸びている話題（Google トレンド・YouTube）をもとに、毎日自動で次を作って投稿します。
+設定手順と収益化の注意点は **[docs/収益化ガイド.md](docs/収益化ガイド.md)** を参照。
+
+- YouTube ショート（縦型 1080x1920、VOICEVOX 読み上げ・字幕付き。形式は曜日で変わる）／TikTok 下書き
+- Bluesky / Mastodon / X への速報（画像付き）
+- ブログ記事（広告・アフィリエイト枠、RSS、サイトマップ）と、note 向けの週刊レポート
+- 悩み・コンプレックス・興味関心に応える「話題ネタ動画」（Claude が台本。既定は確認待ちで非公開アップロード）
+
+| ファイル | 役割 |
+|---|---|
+| `app/content/` | 台本・動画描画・投稿・トレンド分析（`run.py` が全体の流れ） |
+| `monetize.json` | 広告・アフィリエイト・動画の公開設定 |
+| `topics.json` | 話題ネタのジャンル・検索語・悩みワード・注意書き |
+| `.github/workflows/content.yml` | 毎日 18:41 JST に実行 |
+| `content/` | 投稿履歴・記事データ・ネタ候補（Actions がコミット） |
+
 ## 無料で自動更新する（GitHub Actions + GitHub Pages）
 
 公開リポジトリなら、GitHub Actions と GitHub Pages はどちらも無料。30分ごとに次の流れで自動更新される。
@@ -102,6 +120,9 @@ python cli.py collect             # X / RSS から1回収集
 python cli.py reextract           # 辞書を更新したあと、全投稿を抽出し直す
 python cli.py snapshot out.html   # サーバーなしで見られる静的 HTML に書き出す
 python cli.py reset               # DB を削除
+python cli.py content --scale 0.5  # 動画・記事・SNS 文・ネタ候補を作る（--publish で投稿）
+python cli.py trends               # 伸びている話題を調べる
+python cli.py youtube-auth         # YouTube のリフレッシュトークン取得（自分の PC で）
 python -m pytest -q tests
 ```
 

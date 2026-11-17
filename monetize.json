@@ -1,0 +1,33 @@
+{
+  "_comment": "収益化まわりの設定。空欄の項目は表示されない。GitHub の Web 画面から編集すれば次回の自動更新から反映される。",
+  "brand": "SVWB メタトラッカー",
+  "site_url": "",
+  "_site_url": "空なら GitHub Pages の URL（https://<ユーザー>.github.io/<リポジトリ>/）を自動で使う",
+  "youtube_channel_url": "",
+  "topic_brand": "",
+  "_topic_brand": "話題ネタ動画の上部に出す名前（例: 暮らしの小さなヒント）。話題ネタはゲームとは別チャンネルにするのがおすすめ（Secrets の YT_TOPIC_REFRESH_TOKEN）",
+  "hashtags": ["シャドバ", "シャドウバース", "シャドバWB", "ShadowverseWB"],
+
+  "adsense_client": "",
+  "_adsense_client": "Google AdSense の審査に通ったら ca-pub-XXXXXXXXXXXXXXXX を入れる。記事ページとダッシュボード下部に広告枠が出る",
+  "adsense_slot": "",
+
+  "affiliate": [],
+  "_affiliate": "例: [{\"label\": \"スマホ用ゲームコントローラー\", \"url\": \"https://amzn.to/xxxx\", \"note\": \"長時間のランクマに\"}]。記事と動画の概要欄に「PR」表記付きで出る",
+  "amazon_associate": false,
+  "_amazon_associate": "Amazon アソシエイトのリンクを載せるなら true（規約で必要な定型文を自動で表示）",
+
+  "support_links": [],
+  "_support_links": "有料記事・支援サイト。例: [{\"label\": \"週刊・詳細環境レポート（note）\", \"url\": \"https://note.com/xxx/m/xxx\"}]",
+
+  "video": {
+    "_comment": "YouTube ショートの設定",
+    "privacy": "",
+    "_privacy": "空なら Actions の変数 SVWB_YT_PRIVACY、それも無ければ private。最初の数本を確認してから public にする",
+    "playlist_id": "",
+    "category_id": "20",
+    "contains_synthetic_media": false,
+    "min_samples": 30,
+    "_min_samples": "集計対象の件数がこれ未満の日は投稿しない（薄いデータでランキングを出すとチャンネルの信用を落とすため）"
+  }
+}

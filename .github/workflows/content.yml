@@ -1,0 +1,115 @@
+# 毎日1回、ショート動画・SNS 投稿・ブログ記事・ネタ候補を自動で作って投稿する。
+# 何を設定すれば何が動くかは docs/収益化ガイド.md を参照。Secrets が無いところは自動でスキップされる。
+name: daily-content
+
+on:
+  schedule:
+    - cron: "41 9 * * *"     # 毎日 18:41 JST（ショートは夕方〜夜に見られやすい）
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "投稿する（オフなら作るだけ。成果物は Artifacts からダウンロード）"
+        type: boolean
+        default: true
+      kind:
+        description: "データ動画の形式（空なら曜日で自動）"
+        type: choice
+        options: ["", ranking, trend, winrate, matchup, rank]
+        default: ""
+      force:
+        description: "データが少ない日でも作る"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write   # 投稿履歴・記事・ネタ候補をコミットするため
+
+concurrency:
+  group: daily-content
+  cancel-in-progress: false
+
+jobs:
+  content:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install ffmpeg and Japanese fonts
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg fonts-noto-cjk > /dev/null
+
+      - run: pip install -r requirements.txt
+
+      # 読み上げ音声（VOICEVOX）。リポジトリの変数 SVWB_TTS を off にすると音声なし（字幕のみ）で作る
+      - name: Start VOICEVOX engine
+        if: vars.SVWB_TTS != 'off'
+        run: |
+          docker run -d --rm -p 50021:50021 --name voicevox voicevox/voicevox_engine:cpu-latest
+          for i in $(seq 1 60); do curl -sf http://127.0.0.1:50021/version && break; sleep 3; done
+
+      - name: Build database from archive
+        env:
+          SVWB_DB_PATH: data/meta.db
+        run: python cli.py update-site --no-fetch --out site/index.html
+
+      - name: Make and publish content
+        env:
+          SVWB_DB_PATH: data/meta.db
+          SVWB_VOICEVOX_URL: ${{ vars.SVWB_TTS != 'off' && 'http://127.0.0.1:50021' || '' }}
+          SVWB_VOICEVOX_SPEAKER: ${{ vars.SVWB_VOICEVOX_SPEAKER || '3' }}
+          SVWB_YT_PRIVACY: ${{ vars.SVWB_YT_PRIVACY || 'private' }}
+          SVWB_TOPIC_AUTOPUBLISH: ${{ vars.SVWB_TOPIC_AUTOPUBLISH || 'off' }}
+          SVWB_TOPIC_VIDEOS: ${{ vars.SVWB_TOPIC_VIDEOS || '1' }}
+          SVWB_CONTENT_LLM: ${{ vars.SVWB_CONTENT_LLM || 'off' }}
+          # 任意の Secrets（無いものはスキップ）
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          YT_API_KEY: ${{ secrets.YT_API_KEY }}
+          YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
+          YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
+          YT_REFRESH_TOKEN: ${{ secrets.YT_REFRESH_TOKEN }}
+          YT_TOPIC_REFRESH_TOKEN: ${{ secrets.YT_TOPIC_REFRESH_TOKEN }}
+          BSKY_HANDLE: ${{ secrets.BSKY_HANDLE }}
+          BSKY_APP_PASSWORD: ${{ secrets.BSKY_APP_PASSWORD }}
+          BSKY_POST_HANDLE: ${{ secrets.BSKY_POST_HANDLE }}
+          BSKY_POST_APP_PASSWORD: ${{ secrets.BSKY_POST_APP_PASSWORD }}
+          MASTODON_INSTANCE: ${{ secrets.MASTODON_INSTANCE }}
+          MASTODON_TOKEN: ${{ secrets.MASTODON_TOKEN }}
+          X_API_KEY: ${{ secrets.X_API_KEY }}
+          X_API_SECRET: ${{ secrets.X_API_SECRET }}
+          X_ACCESS_TOKEN: ${{ secrets.X_ACCESS_TOKEN }}
+          X_ACCESS_SECRET: ${{ secrets.X_ACCESS_SECRET }}
+          TIKTOK_CLIENT_KEY: ${{ secrets.TIKTOK_CLIENT_KEY }}
+          TIKTOK_CLIENT_SECRET: ${{ secrets.TIKTOK_CLIENT_SECRET }}
+          TIKTOK_REFRESH_TOKEN: ${{ secrets.TIKTOK_REFRESH_TOKEN }}
+        run: |
+          ARGS="--out dist/content"
+          if [ "${{ github.event_name }}" = "schedule" ] || [ "${{ inputs.publish }}" = "true" ]; then ARGS="$ARGS --publish"; fi
+          if [ -n "${{ inputs.kind }}" ]; then ARGS="$ARGS --kind ${{ inputs.kind }}"; fi
+          if [ "${{ inputs.force }}" = "true" ]; then ARGS="$ARGS --force"; fi
+          python cli.py content $ARGS
+          cat dist/content/summary.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Save history, articles and ideas
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add content
+          if git diff --cached --quiet; then
+            echo "変更なし"
+          else
+            git commit -m "content: 投稿履歴・記事・ネタ候補を更新 [skip ci]"
+            for i in 1 2 3; do git pull --rebase --quiet && git push && break; sleep 5; done
+          fi
+
+      # 公開リポジトリの Artifacts は GitHub にログインした人なら誰でも取得できる。
+      # 有料レポート（weekly_report.md）を外に出したくない場合は、ローカルで python cli.py content を実行する。
+      - uses: actions/upload-artifact@v4
+        with:
+          name: content-${{ github.run_number }}
+          path: dist/content
+          retention-days: 14
