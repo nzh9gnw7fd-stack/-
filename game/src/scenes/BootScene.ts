@@ -1,9 +1,12 @@
 import Phaser from 'phaser';
+import { createPlaceholderTextures } from '../core/textures';
 
 /**
- * アセットの読み込みを担当するシーン。
- * 画像や音声は public/assets/ に置き、ここで this.load.image('key', 'assets/xxx.png') のように読み込む。
- * サンプルでは画像を用意しなくても動くよう、図形からテクスチャを生成している。
+ * 素材の読み込み。画像や音声は public/assets/ に置き、preload() で読み込む。
+ *   this.load.image('player', 'assets/player.png');          // 画像（キー 'player' の仮画像を置き換え）
+ *   this.load.spritesheet('hero', 'assets/hero.png', { frameWidth: 32, frameHeight: 32 }); // アニメ用
+ *   this.load.audio('bgm', 'assets/bgm.mp3');                // 音楽
+ *   this.load.tilemapTiledJSON('map1', 'assets/map1.json');  // Tiled で作ったマップ
  */
 export class BootScene extends Phaser.Scene {
   constructor() {
@@ -11,26 +14,12 @@ export class BootScene extends Phaser.Scene {
   }
 
   preload(): void {
-    // 例: this.load.image('player', 'assets/player.png');
+    const bar = this.add.rectangle(400, 300, 0, 16, 0x4fc3f7);
+    this.load.on('progress', (v: number) => (bar.width = 400 * v));
   }
 
   create(): void {
-    this.makeTexture('player', 40, 40, (g) => {
-      g.fillStyle(0x4fc3f7).fillRoundedRect(0, 0, 40, 40, 8);
-      g.fillStyle(0xffffff).fillCircle(13, 15, 5).fillCircle(27, 15, 5);
-      g.fillStyle(0x1d2033).fillCircle(14, 16, 2).fillCircle(28, 16, 2);
-    });
-    this.makeTexture('coin', 20, 20, (g) => {
-      g.fillStyle(0xffd54f).fillCircle(10, 10, 10);
-      g.fillStyle(0xffecb3).fillCircle(7, 7, 3);
-    });
-    this.scene.start('Title');
-  }
-
-  private makeTexture(key: string, w: number, h: number, draw: (g: Phaser.GameObjects.Graphics) => void): void {
-    const g = this.make.graphics({ x: 0, y: 0 }, false);
-    draw(g);
-    g.generateTexture(key, w, h);
-    g.destroy();
+    createPlaceholderTextures(this);
+    this.scene.start('Menu');
   }
 }
