@@ -1,0 +1,5 @@
+node_modules/
+dist/
+
+# ルートの .gitignore の data/（メタトラッカー用）に巻き込まれないようにする
+!src/data/
