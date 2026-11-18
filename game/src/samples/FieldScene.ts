@@ -47,6 +47,7 @@ export class FieldScene extends Phaser.Scene {
   private hint!: Phaser.GameObjects.Text;
   private flags: Record<string, boolean> = {};
   private seed = 1;
+  private marker!: Phaser.GameObjects.Arc;
 
   constructor() {
     super('Field');
@@ -90,7 +91,7 @@ export class FieldScene extends Phaser.Scene {
     mini.centerOn(worldW / 2, worldW / 2);
     const marker = this.add.circle(0, 0, 80, 0xff1744).setDepth(5);
     this.cameras.main.ignore(marker);
-    this.events.on('update', () => marker.setPosition(this.player.x, this.player.y));
+    this.marker = marker;
 
     this.dialogue = new DialogueBox(this);
     this.controls = new GameInput(this);
@@ -110,6 +111,7 @@ export class FieldScene extends Phaser.Scene {
   }
 
   update(): void {
+    this.marker.setPosition(this.player.x, this.player.y);
     const body = this.player.body as Phaser.Physics.Arcade.Body;
     if (this.dialogue.isOpen) {
       body.setVelocity(0, 0);

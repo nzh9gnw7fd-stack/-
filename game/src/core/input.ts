@@ -5,7 +5,7 @@ import type { DirectionInput } from '../logic/movement';
  * キーボード・ゲームパッド・タッチ（スマホ）をまとめて扱う入力クラス。
  * - 移動: 矢印キー / WASD / パッドの左スティック・十字キー / 画面左半分ドラッグ（仮想スティック）
  * - 決定(A): Space / Z / Enter / パッド A / 画面右半分タップ
- * - キャンセル(B): X / パッド B
+ * - キャンセル(B): X / ESC / パッド B
  */
 export class GameInput {
   private readonly keys: Record<string, Phaser.Input.Keyboard.Key>;
@@ -101,7 +101,7 @@ export class GameInput {
 
   get cancelPressed(): boolean {
     this.poll();
-    return this.pressed('KeyX') || this.padPressed.b;
+    return this.pressed('KeyX', 'Escape', 'Backspace') || this.padPressed.b;
   }
 
   /** 方向キーを押した瞬間（ターン制のゲーム向け） */

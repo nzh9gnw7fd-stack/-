@@ -31,9 +31,10 @@ export class MenuScene extends Phaser.Scene {
     const h = 100;
     SAMPLES.forEach((s, i) => {
       const x = GAME_WIDTH / 2 + ((i % cols) - 1) * (w + 20);
-      const y = 190 + Math.floor(i / cols) * (h + 20);
+      const y = 175 + Math.floor(i / cols) * (h + 14);
       button(this, x, y, w, h, s.label, () => {
         if (s.key === '3D') window.location.href = './3d.html';
+        else if (s.key === 'RPG') window.location.href = './rpg.html';
         else this.scene.start(s.key);
       }, s.desc);
     });
@@ -44,6 +45,6 @@ export class MenuScene extends Phaser.Scene {
     sound.on('pointerdown', toggle);
     this.input.keyboard?.on('keydown-M', toggle);
     refresh();
-    text(this, GAME_WIDTH / 2, 575, 'キーボード・ゲームパッド・タッチ操作に対応', 14, '#607d8b').setOrigin(0.5);
+    text(this, GAME_WIDTH / 2, 580, 'キーボード・ゲームパッド・タッチ操作に対応', 14, '#607d8b').setOrigin(0.5);
   }
 }

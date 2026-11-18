@@ -12,6 +12,7 @@ export default defineConfig({
       input: {
         main: resolve(import.meta.dirname, 'index.html'),
         three: resolve(import.meta.dirname, '3d.html'),
+        rpg: resolve(import.meta.dirname, 'rpg.html'),
       },
     },
   },
